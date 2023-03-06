@@ -3,6 +3,8 @@ xPosition := A_ScreenWidth - bannerWidth - 137
 
 logger := StateLog() ;定义计时器对象
 
+winArr:=["ahk_exe HarmonyPremium.exe", "ahk_exe PureRef.exe"] ;工作软件列表
+
 MyGui := Gui()
 MyGui.Opt("+AlwaysOnTop -Caption +ToolWindow" ) ; +ToolWindow 避免显示任务栏按钮和 alt-tab 菜单项.
 MyGui.BackColor := "ffffff" ; 可以是任何 RGB 颜色(下面会变成透明的).
@@ -25,7 +27,7 @@ class StateLog {
         SetTimer this.check, 1000
     }
     StateCheck() {
-        if(WinActive("ahk_exe TIM.exe") and A_TimeIdlePhysical<5000){
+        if(ifwinAct() and A_TimeIdlePhysical<30000){
             this.WorkTime++
             if !(this.WorkIn = 1){
                 this.WorkIn :=1
@@ -45,6 +47,15 @@ class StateLog {
     }
 }
 
+ifwinAct(){
+    Loop winArr.Length{
+        if(WinActive(winArr[A_Index])){
+            Return 1
+        }
+    }
+    Return 0
+}
+
 FormatSeconds(NumberOfSeconds) ; 把指定的秒数转换成 hh:mm:ss 格式.
 {
     time := 19990101 ; 任意日期的 *午夜*.
@@ -55,4 +66,4 @@ FormatSeconds(NumberOfSeconds) ; 把指定的秒数转换成 hh:mm:ss 格式.
     return FormatTime(time, "h:mm:ss")
     */
 }
-;ahk_exe TIM.exe
+;ahk_exe HarmonyPremium.exe
