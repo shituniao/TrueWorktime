@@ -3,7 +3,7 @@ xPosition := A_ScreenWidth - bannerWidth - 137
 
 logger := StateLog() ;定义计时器对象
 
-winArr:=["ahk_exe HarmonyPremium.exe", "ahk_exe PureRef.exe"] ;工作软件列表
+winArr:=["ahk_exe HarmonyPremium.exe", "ahk_exe PureRef.exe", "ahk_exe tim.exe"] ;工作软件列表
 
 MyGui := Gui()
 MyGui.Opt("+AlwaysOnTop -Caption +ToolWindow" ) ; +ToolWindow 避免显示任务栏按钮和 alt-tab 菜单项.
@@ -21,7 +21,10 @@ class StateLog {
         this.WorkTime :=0
         this.BreakTime :=0
         this.WorkIn :=0
+        this.sitTime :=0
+        this.alarmWave:=6
         this.check :=ObjBindMethod(this, "StateCheck")
+        this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
     Start() {
         SetTimer this.check, 1000
@@ -29,6 +32,7 @@ class StateLog {
     StateCheck() {
         if(ifwinAct() and A_TimeIdlePhysical<30000){
             this.WorkTime++
+            this.sitTime++
             if !(this.WorkIn = 1){
                 this.WorkIn :=1
                 MyGui.BackColor := "000000"
@@ -43,6 +47,32 @@ class StateLog {
                 CoordText.SetFont("c000000")
             }
             CoordText.Value := FormatSeconds(this.BreakTime)
+            ;关于番茄钟部分的内容↓原理是根据非离开时间累计达到1800秒（30分钟）时抖动提醒
+            if(A_TimeIdlePhysical>=30000){
+                this.sitTime:=0
+            }else{
+                this.sitTime++
+            }
+        }
+        if(Mod(this.sitTime,1800)=0 and this.sitTime>0){
+            this.WorkIn :=3
+            MyGui.BackColor := "ea4135"
+            CoordText.SetFont("cffffff")
+            CoordText.Value := "坐太久了"
+            SetTimer this.tmtAlarm, 40
+        }
+    }
+    TomatoAlarm(){
+        Switch Mod(this.alarmWave, 2){
+        Case 1:
+            MyGui.Move(xPosition-this.alarmWave)
+        Case 0:
+            MyGui.Move(xPosition+this.alarmWave)
+        }
+        this.alarmWave--
+        if(this.alarmWave=0){
+            this.alarmWave:=6
+            SetTimer , 0
         }
     }
 }
@@ -50,10 +80,10 @@ class StateLog {
 ifwinAct(){
     Loop winArr.Length{
         if(WinActive(winArr[A_Index])){
-            Return 1
-        }
+        Return 1
     }
-    Return 0
+}
+Return 0
 }
 
 FormatSeconds(NumberOfSeconds) ; 把指定的秒数转换成 hh:mm:ss 格式.
