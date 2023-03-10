@@ -20,26 +20,52 @@ logger.Start ;启动计时
 A_TrayMenu.Rename("E&xit","退出")
 A_TrayMenu.Delete("&Suspend Hotkeys")
 A_TrayMenu.Delete("&Pause Script")
-A_TrayMenu.Insert("1&", "久坐30分钟提醒", MenuHandler)
-A_TrayMenu.Check("1&")
+A_TrayMenu.Insert("1&", "暂停", MenuHandler)
+A_TrayMenu.Insert("2&", "重置计时器", MenuHandler)
+A_TrayMenu.Insert("3&", "久坐30分钟提醒", MenuHandler)
+A_TrayMenu.Check("3&")
+A_TrayMenu.Default:="1&"
+
 Persistent
 ;久坐30分钟提醒函数
 MenuHandler(ItemName, ItemPos, MyMenu) {
-    logger.sitTime:=0
-    if(logger.tomatoToggle){
-        logger.tomatoToggle:=0
-        A_TrayMenu.Uncheck("1&")
-    }else{
-        logger.tomatoToggle:=1
-        A_TrayMenu.Check("1&")
+    Switch ItemPos{
+    Case 1 :
+        {
+            Pause -1
+            if(A_IsPaused){
+                A_TrayMenu.Rename("1&","继续")
+            }else{
+                A_TrayMenu.Rename("1&","暂停")
+            }
+        }
+    Case 2:
+        {
+            logger.WorkTime :=0
+            logger.BreakTime :=0
+            CoordText.Value := FormatSeconds(logger.WorkTime)
+        }
+    Case 3 :
+        {
+            logger.sitTime:=0
+            if(logger.tomatoToggle){
+                logger.tomatoToggle:=0
+                A_TrayMenu.Uncheck("2&")
+            }else{
+                logger.tomatoToggle:=1
+                A_TrayMenu.Check("2&")
+            }
+
+        }
     }
+
 }
 
 class StateLog {
     __New(){
         this.WorkTime :=0
         this.BreakTime :=0
-        this.WorkIn :=0
+        this.WorkIn :=0 ;计时器状态，1-工作中，2-摸鱼中，3-久坐提醒
         this.sitTime :=0
         this.alarmWave:=6
         this.tomatoToggle:=1
@@ -74,7 +100,7 @@ class StateLog {
                 this.sitTime++
             }
         }
-        if(Mod(this.sitTime,5)=0 and this.sitTime>0 and this.tomatoToggle=1){
+        if(Mod(this.sitTime,1800)=0 and this.sitTime>0 and this.tomatoToggle=1){
             this.WorkIn :=3
             MyGui.BackColor := "ea4135"
             CoordText.SetFont("cffffff")
@@ -116,4 +142,5 @@ FormatSeconds(NumberOfSeconds) ; 把指定的秒数转换成 hh:mm:ss 格式.
     return FormatTime(time, "h:mm:ss")
     */
 }
+
 ;ahk_exe HarmonyPremium.exe
