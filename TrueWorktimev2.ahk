@@ -16,6 +16,24 @@ MyGui.Show("x" xPosition " y0 h30 w" bannerWidth " NoActivate") ; NoActivate 让
 
 logger.Start ;启动计时
 
+;定义托盘图标
+A_TrayMenu.Rename("E&xit","退出")
+A_TrayMenu.Delete("&Suspend Hotkeys")
+A_TrayMenu.Delete("&Pause Script")
+A_TrayMenu.Insert("1&", "久坐30分钟提醒", MenuHandler)
+Persistent
+;久坐30分钟提醒函数
+MenuHandler(ItemName, ItemPos, MyMenu) {
+    logger.sitTime:=0
+    if(logger.tomatoToggle){
+        logger.tomatoToggle:=0
+        A_TrayMenu.Uncheck("1&")
+    }else{
+        logger.tomatoToggle:=1
+        A_TrayMenu.Check("1&")
+    }
+}
+
 class StateLog {
     __New(){
         this.WorkTime :=0
@@ -23,6 +41,7 @@ class StateLog {
         this.WorkIn :=0
         this.sitTime :=0
         this.alarmWave:=6
+        this.tomatoToggle:=0
         this.check :=ObjBindMethod(this, "StateCheck")
         this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
@@ -54,7 +73,7 @@ class StateLog {
                 this.sitTime++
             }
         }
-        if(Mod(this.sitTime,1800)=0 and this.sitTime>0){
+        if(Mod(this.sitTime,5)=0 and this.sitTime>0 and this.tomatoToggle=1){
             this.WorkIn :=3
             MyGui.BackColor := "ea4135"
             CoordText.SetFont("cffffff")
