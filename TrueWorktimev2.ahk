@@ -21,6 +21,7 @@ A_TrayMenu.Rename("E&xit","退出")
 A_TrayMenu.Delete("&Suspend Hotkeys")
 A_TrayMenu.Delete("&Pause Script")
 A_TrayMenu.Insert("1&", "久坐30分钟提醒", MenuHandler)
+A_TrayMenu.Check("1&")
 Persistent
 ;久坐30分钟提醒函数
 MenuHandler(ItemName, ItemPos, MyMenu) {
@@ -41,7 +42,7 @@ class StateLog {
         this.WorkIn :=0
         this.sitTime :=0
         this.alarmWave:=6
-        this.tomatoToggle:=0
+        this.tomatoToggle:=1
         this.check :=ObjBindMethod(this, "StateCheck")
         this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
