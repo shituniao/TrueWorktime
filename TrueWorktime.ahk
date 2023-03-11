@@ -1,9 +1,11 @@
+Version :="v1.0.0"
 bannerWidth :=100
-xPosition := A_ScreenWidth - bannerWidth - 137
 
 logger := StateLog() ;定义计时器对象
 
-WorkExe:=StrSplit(IniRead("WorkExe.ini","exelist","workexe"),",") ;工作软件列表
+;读取ini文件
+WorkExe:=StrSplit(IniRead("Config.ini","exelist","workexe"),",") ;工作软件列表
+SitLimit:=1800 ; 久坐时间
 ;WorkExe:=["HarmonyPremium.exe", "PureRef.exe", "tim.exe"] 
 
 ;计时器悬浮窗
@@ -20,7 +22,7 @@ if(WorkExe.Length>0){
 
 WinSetTransColor(" 230", ClockGui) ; 半透明:
 WinSetExStyle("+0x20", ClockGui) ;鼠标穿透
-ClockGui.Show("x" xPosition " y0 h30 w" bannerWidth " NoActivate") ; NoActivate 让当前活动窗口继续保持活动状态.
+ClockGui.Show("x" logger.x "y" logger.y " h30 w" bannerWidth " NoActivate") ; NoActivate 让当前活动窗口继续保持活动状态.
 
 ;计时器设置窗口
 Config :=Gui()
@@ -35,9 +37,16 @@ ExeWork :=Config.AddListBox("y+10 R9 vExeWork w300 Choose1 ",)
 Config.Add("Button", "y+10 w80", "添加").OnEvent("Click", ClickADD)
 Config.Add("Button", "x+30 w80", "刷新").OnEvent("Click", ClickREFRESH)
 Config.Add("Button", "x+30 w80", "清空").OnEvent("Click", ClickCLEAR)
-Config.AddText("y+10 xm w300","提示 :`n如果列表中没有要选的软件，试试打开这个软件，然后点击刷新按钮").SetFont("s9 c444444")
+Config.AddText("y+10 xm w300","提示 :`n将你认为是工作用的软件的程序添加到上面的列表中，`n（如果列表中没有要选的软件，尝试先打开这个软件，然后点击刷新按钮，程序会自动检测）").SetFont("s9 c444444")
 Caution :=Config.AddText("y+10 vCaution w300")
 Caution.SetFont("s9 c444444")
+
+;帮助窗口
+Help:=Gui()
+Help.Title:="工作计时器 " Version
+Help.MarginX :=12
+Help.MarginY :=15
+Help.SetFont("s9 c444444","Microsoft YaHei UI")
 
 logger.Start ;启动计时器
 
@@ -45,30 +54,43 @@ logger.Start ;启动计时器
 A_TrayMenu.Rename("E&xit","退出")
 A_TrayMenu.Delete("&Suspend Hotkeys")
 A_TrayMenu.Delete("&Pause Script")
-A_TrayMenu.Insert("1&", "久坐30分钟提醒", MenuHandler)
-A_TrayMenu.Check("1&")
-A_TrayMenu.Insert("2&", "暂停", MenuHandler)
-A_TrayMenu.Insert("3&", "重置计时器", MenuHandler)
-A_TrayMenu.Insert("4&", "设置工作软件", MenuHandler)
-A_TrayMenu.Default:="2&"
+A_TrayMenu.Insert("1&", "暂停", MenuHandler)
+A_TrayMenu.Insert("2&", "重置计时器", MenuHandler)
+A_TrayMenu.Insert("3&")
+A_TrayMenu.Insert("4&", "久坐30分钟提醒", MenuHandler)
+if(logger.tomatoToggle){
+    A_TrayMenu.check("4&")
+}else{
+    A_TrayMenu.UnCheck("4&")
+}
+MonitorMenu :=Menu()
+A_TrayMenu.Insert("5&", "计时器显示在...", MonitorMenu)
+Loop MonitorGetCount(){
+    MonitorMenu.Add("显示器" A_Index , MonitorChoose)
+}
+A_TrayMenu.Insert("6&", "设置工作软件", MenuHandler)
+A_TrayMenu.Insert("7&")
+A_TrayMenu.Insert("8&", "帮助", MenuHandler)
+
+A_TrayMenu.Default:="1&"
 
 Persistent
 ;托盘控件功能及程序设置界面
 MenuHandler(ItemName, ItemPos, MyMenu) {
     Switch ItemPos{
-    Case 1 :
+    Case 4 :
         {
             logger.sitTime:=0
             if(logger.tomatoToggle){
                 logger.tomatoToggle:=0
-                A_TrayMenu.Uncheck("1&")
+                A_TrayMenu.Uncheck("4&")
             }else{
                 logger.tomatoToggle:=1
-                A_TrayMenu.Check("1&")
+                A_TrayMenu.Check("4&")
             }
-
+            IniWrite logger.tomatoToggle,"Config.ini","setting","tomato_alarm"
         }
-    Case 2:
+    Case 1:
         {
             Pause -1
             if(A_IsPaused){
@@ -79,13 +101,13 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
             }
         }
 
-    Case 3 :
+    Case 2 :
         {
             logger.WorkTime :=0
             logger.BreakTime :=0
             CoordText.Value := FormatSeconds(logger.WorkTime)
         }
-    Case 4 :
+    Case 6 :
         {
             Config.Show("AutoSize Center")
             WorkL:=""
@@ -97,7 +119,18 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
             ExeWork.Add(GetExeNameList())
             ExeWork.Choose(1)
         }
+    Case 8:
+        {
+            Help.Show("AutoSize Center")
+        }
     }
+}
+MonitorChoose(ItemName, ItemPos, MyMenu){
+    MonitorGetWorkArea ItemPos, &WL, &WT, &WR, &WB
+    logger.x := WR - bannerWidth - 137
+    logger.y := WT
+    ClockGui.Move(logger.x,logger.y)
+    IniWrite ItemPos,"Config.ini","setting","monitor"
 }
 if(WorkExe.Length<=0){
     TrayTip "右键点击任务栏图标进行设置", "尚未设置工作软件"
@@ -127,7 +160,7 @@ ClickADD(thisGui, *)
     }
     ;写入ini文件
     iniCache := RTrim(iniCache,",")
-    IniWrite iniCache,"WorkExe.ini","exelist"
+    IniWrite iniCache,"Config.ini","exelist"
     ;MsgBox(iniCache)
     for n in WorkExe{
         WorkL .=StrSplit(n,".exe")[1] "`n" 
@@ -150,8 +183,8 @@ ClickCLEAR(thisGui, *){
     }
     ;写入ini文件
     iniCache := RTrim(iniCache,",")
-    IniWrite iniCache,"WorkExe.ini","exelist"
-    ;IniWrite "workexe=","WorkExe.ini","exelist"
+    IniWrite iniCache,"Config.ini","exelist"
+    ;IniWrite "workexe=","Config.ini","exelist"
     WorkList.Value:=""
     Caution.Value := "工作软件已清空！"
 }
@@ -181,12 +214,15 @@ GetExeNameList(){
 ;计时器类（核心程序
 class StateLog {
     __New(){
+        MonitorGetWorkArea IniRead("Config.ini","setting","monitor"), &WL, &WT, &WR, &WB
+        this.x:=WR - bannerWidth - 137
+        this.y:=WT
         this.WorkTime :=0
         this.BreakTime :=0
         this.WorkIn :=2 ;计时器状态，1-工作中，2-摸鱼中，3-久坐提醒， 4-未设置工作软件
         this.sitTime :=0
         this.alarmWave:=6
-        this.tomatoToggle:=1
+        this.tomatoToggle:=IniRead("Config.ini","setting","tomato_alarm")
         this.check :=ObjBindMethod(this, "StateCheck")
         this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
@@ -227,12 +263,14 @@ class StateLog {
                     this.sitTime++
                 }
             }
-            if(Mod(this.sitTime,1800)=0 and this.sitTime>0 and this.tomatoToggle=1){
+            if(this.tomatoToggle=1 and Mod(this.sitTime,SitLimit)>0 and Mod(this.sitTime,SitLimit)<3 and this.sitTime>SitLimit){
                 this.WorkIn :=3
                 ClockGui.BackColor := "ea4135"
                 CoordText.SetFont("cffffff")
                 CoordText.Value := "坐太久了"
-                SetTimer this.tmtAlarm, 40
+                if(Mod(this.sitTime,SitLimit)=1){
+                    SetTimer this.tmtAlarm, 40
+                }
             }
             ; 托盘图标提示
         }
@@ -248,9 +286,9 @@ class StateLog {
     TomatoAlarm(){
         Switch Mod(this.alarmWave, 2){
         Case 1:
-            ClockGui.Move(xPosition-this.alarmWave)
+            ClockGui.Move(this.x-this.alarmWave,this.y)
         Case 0:
-            ClockGui.Move(xPosition+this.alarmWave)
+            ClockGui.Move(this.x+this.alarmWave,this.y)
         }
         this.alarmWave--
         if(this.alarmWave=0){
@@ -281,4 +319,22 @@ FormatSeconds(NumberOfSeconds) ; 把指定的秒数转换成 hh:mm:ss 格式.
     */
 }
 
-;ahk_exe HarmonyPremium.exe
+; 帮助文本
+Help.AddText("y+10 w300","说明：").SetFont("s10 bold")
+Help.AddText("xp+10 y+10 w280","工作计时器是一个帮助用户记录工作时长和空闲时长的程序。")
+Help.AddText("y+10 w280","程序每秒检测当前正在使用的软件是否是预先设定的工作软件，以及用户是否在30秒内有鼠标操作或键盘输入。")
+Help.AddText("xm y+10 w300","图例：").SetFont("s10 bold")
+Help.AddText("xp+10 y+10 w280","若当前软件是工作软件，且电脑在30秒内有键鼠操作，则会记录为工作时间，显示为黑底白字。")
+Help.AddText("y+10 BackGround000000 cffffff h8 w" bannerWidth " Center","")
+Help.AddText("y+0 BackGround000000 cffffff h30 w" bannerWidth " Center","06:29:01").SetFont("s12")
+Help.AddText("y+10 w280","若当前软件不是工作软件，或超过30秒没有操作，则会记录为空闲时间，显示为白底黑字。")
+Help.AddText("y+10 BackGroundffffff c000000 h8 w" bannerWidth " Center","")
+Help.AddText("y+0 BackGroundffffff c000000 h30 w" bannerWidth " Center","05:13:22").SetFont("s12")
+Help.AddText("y+10 w280","提供久坐提醒功能，当用户维持键鼠操作超过30分钟时，程序会显示红色久坐提示（这个功能可以关闭）")
+Help.AddText("y+10 BackGroundea4135 cffffff h8 w" bannerWidth " Center","")
+Help.AddText("y+0 BackGroundea4135 cffffff h30 w" bannerWidth " Center","坐太久了").SetFont("s12")
+Help.AddText("xm y+20 w300","作者与联系方式：").SetFont("s10 bold")
+Help.AddText("xp+10 y+10 w280","本程序基于AutoHotkey 2.0.2编写`n由shituniao制作")
+Help.AddLink("y+10 w280", '<a href="https://www.autohotkey.com/">AutoHotkey官网</a>')
+Help.AddLink("y+5 w280", '<a href="https://github.com/shituniao/TrueWorktime">Github地址</a>')
+Help.AddLink("y+5 w280 h0",).Focus()
