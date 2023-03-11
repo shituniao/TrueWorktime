@@ -38,7 +38,7 @@ ExeWork :=Config.AddListBox("y+10 R9 vExeWork w300 Choose1 ",)
 Config.Add("Button", "y+10 w80", "添加").OnEvent("Click", ClickADD)
 Config.Add("Button", "x+30 w80", "刷新").OnEvent("Click", ClickREFRESH)
 Config.Add("Button", "x+30 w80", "清空").OnEvent("Click", ClickCLEAR)
-Config.AddText("y+10 xm w300","提示 :`n将你认为是工作用的软件的程序添加到上面的列表中，`n（如果列表中没有要选的软件，尝试先打开这个软件，然后点击刷新按钮，程序会自动检测）").SetFont("s9 c444444")
+Config.AddText("y+10 xm w300","提示 :`n将你认为是工作用的软件添加到上面的列表中，`n（如果列表中没有要选的软件，尝试先打开这个软件，然后点击刷新按钮，程序会自动检测）").SetFont("s9 c444444")
 Caution :=Config.AddText("y+10 vCaution w300")
 Caution.SetFont("s9 c444444")
 
