@@ -2,6 +2,7 @@ Version :="v1.0.0"
 bannerWidth :=100
 
 logger := StateLog() ;定义计时器对象
+TraySetIcon(, , 1) ;冻结托盘图标
 
 ;读取ini文件
 WorkExe:=StrSplit(IniRead("Config.ini","exelist","workexe"),",") ;工作软件列表
@@ -26,7 +27,7 @@ ClockGui.Show("x" logger.x "y" logger.y " h30 w" bannerWidth " NoActivate") ; No
 
 ;计时器设置窗口
 Config :=Gui()
-Config.Title :="设置工作软件"
+Config.Title :="工作计时器"
 Config.MarginX :=12
 Config.MarginY :=15
 Config.SetFont("s10","Microsoft YaHei UI")
@@ -55,7 +56,7 @@ A_TrayMenu.Rename("E&xit","退出")
 A_TrayMenu.Delete("&Suspend Hotkeys")
 A_TrayMenu.Delete("&Pause Script")
 A_TrayMenu.Insert("1&", "暂停", MenuHandler)
-A_TrayMenu.Insert("2&", "重置计时器", MenuHandler)
+A_TrayMenu.Insert("2&", "重置", MenuHandler)
 A_TrayMenu.Insert("3&")
 A_TrayMenu.Insert("4&", "久坐30分钟提醒", MenuHandler)
 if(logger.tomatoToggle){
@@ -96,8 +97,14 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
             if(A_IsPaused){
                 A_IconTip := "计时已暂停"
                 A_TrayMenu.Rename("1&","继续")
+                TrayTip , "计时器已暂停"
+                Sleep 2000 ; 让它显示 3 秒钟.
+                TrayTip
             }else{
                 A_TrayMenu.Rename("1&","暂停")
+                TrayTip , "计时器已继续"
+                Sleep 2000 ; 让它显示 3 秒钟.
+                TrayTip
             }
         }
 
@@ -106,6 +113,9 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
             logger.WorkTime :=0
             logger.BreakTime :=0
             CoordText.Value := FormatSeconds(logger.WorkTime)
+            TrayTip , "计时器已重置"
+            Sleep 2000 ; 让它显示 3 秒钟.
+            TrayTip
         }
     Case 6 :
         {
