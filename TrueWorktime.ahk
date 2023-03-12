@@ -95,7 +95,7 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
         {
             Pause -1
             if(A_IsPaused){
-                A_IconTip := "计时已暂停"
+                A_IconTip := "计时器已暂停`n工作时间：" FormatSeconds(logger.WorkTime) "`n摸鱼时间：" FormatSeconds(logger.BreakTime)
                 A_TrayMenu.Rename("1&","继续")
                 TrayTip , "计时器已暂停"
                 Sleep 2000 ; 让它显示 3 秒钟.
@@ -286,9 +286,9 @@ class StateLog {
         }
         Switch this.WorkIn{
         Case 1:
-            A_IconTip := "计时中...`n当前状态：工作" 
+            A_IconTip := "计时中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
         Case 2:
-            A_IconTip := "计时中...`n当前状态：摸鱼或离开" 
+            A_IconTip := "计时中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
         Case 4:
             A_IconTip := "尚未设置工作软件`n右键图标选择设置" 
         }
