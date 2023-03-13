@@ -64,14 +64,20 @@ if(logger.tomatoToggle){
 }else{
     A_TrayMenu.UnCheck("4&")
 }
+A_TrayMenu.Insert("5&", "显示顶部浮窗", MenuHandler)
+if(IniRead("Config.ini","setting","show","1")="1"){
+    A_TrayMenu.check("5&")
+}else{
+    A_TrayMenu.UnCheck("5&")
+}
 MonitorMenu :=Menu()
-A_TrayMenu.Insert("5&", "计时器显示在...", MonitorMenu)
+A_TrayMenu.Insert("6&", "顶部浮窗显示在...", MonitorMenu)
 Loop MonitorGetCount(){
     MonitorMenu.Add("显示器" A_Index , MonitorChoose)
 }
-A_TrayMenu.Insert("6&", "设置工作软件", MenuHandler)
-A_TrayMenu.Insert("7&")
-A_TrayMenu.Insert("8&", "帮助", MenuHandler)
+A_TrayMenu.Insert("7&", "设置工作软件", MenuHandler)
+A_TrayMenu.Insert("8&")
+A_TrayMenu.Insert("9&", "帮助", MenuHandler)
 
 A_TrayMenu.Default:="1&"
 
@@ -117,7 +123,19 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
             Sleep 2000 ; 让它显示 3 秒钟.
             TrayTip
         }
-    Case 6 :
+    Case 5:
+        {
+            if(IniRead("Config.ini","setting","show","1")="1"){
+                A_TrayMenu.uncheck("5&")
+                ClockGui.Hide()
+                IniWrite "0","Config.ini","setting","show"
+            }else{
+                A_TrayMenu.Check("5&")
+                ClockGui.Show()
+                IniWrite "1","Config.ini","setting","show"
+            }
+        }
+    Case 7 :
         {
             Config.Show("AutoSize Center")
             WorkL:=""
@@ -129,14 +147,14 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
             ExeWork.Add(GetExeNameList())
             ExeWork.Choose(1)
         }
-    Case 8:
+    Case 9:
         {
             Help.Show("AutoSize Center")
         }
     }
 }
 MonitorChoose(ItemName, ItemPos, MyMenu){
-    MonitorGetWorkArea ItemPos, &WL, &WT, &WR, &WB
+    MonitorGet ItemPos, &WL, &WT, &WR, &WB
     logger.x := WR - bannerWidth - 137
     logger.y := WT
     ClockGui.Move(logger.x,logger.y)
@@ -224,7 +242,7 @@ GetExeNameList(){
 ;计时器类（核心程序
 class StateLog {
     __New(){
-        MonitorGetWorkArea IniRead("Config.ini","setting","monitor"), &WL, &WT, &WR, &WB
+        MonitorGet IniRead("Config.ini","setting","monitor"), &WL, &WT, &WR, &WB
         this.x:=WR - bannerWidth - 137
         this.y:=WT
         this.WorkTime :=0
