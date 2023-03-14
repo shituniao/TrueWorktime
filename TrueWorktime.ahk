@@ -11,7 +11,7 @@ SitLimit:=1800 ; 久坐时间
 
 ;计时器悬浮窗
 ClockGui := Gui()
-ClockGui.Opt("+AlwaysOnTop -Caption +ToolWindow" ) ; +ToolWindow 避免显示任务栏按钮和 alt-tab 菜单项.
+ClockGui.Opt("+AlwaysOnTop -Caption +Owner" ) ; +ToolWindow 避免显示任务栏按钮和 alt-tab 菜单项.
 ClockGui.BackColor := "ffffff" ; 可以是任何 RGB 颜色(下面会变成透明的).
 ClockGui.SetFont("s12","Microsoft YaHei UI") 
 if(WorkExe.Length>0){
