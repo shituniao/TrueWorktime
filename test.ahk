@@ -3,9 +3,11 @@ Config.Title :="工作计时器"
 Config.MarginX :=12
 Config.MarginY :=15
 Config.SetFont("s10","Microsoft YaHei UI")
-ExeWork :=Config.AddListView("xm ym r9 vExeWork w300 +List",["名称"])
-ImageListID := IL_Create()
-ExeWork.SetImageList(ImageListID)
+ExeWork :=Config.AddListView("xm ym r9 vExeWork w300 -Hdr -Multi",["名称"])
+ExeWorkIcon := IL_Create()
+ExeWork.SetImageList(ExeWorkIcon)
+ExeWork.OnEvent("ItemSelect",ExeWork_ItemSelect)
+Config.Add("Button", "xm w80 w300", "✔️保存").OnEvent("Click", ClickSAVE)
 
 ids := WinGetList() ;获取当前程序列表
 ENL_p :=[] ;程序列表去重
@@ -21,11 +23,18 @@ for this_id in ids
     }
     if (hased =0){
         ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
-        ExeWork.Add(,StrSplit(WinGetProcessName(this_id),".exe")[1])
-        IL_Add(ImageListID, WinGetProcessPath(this_id), A_Index) 
+        ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(WinGetProcessName(this_id),".exe")[1])
+        ENL_p.Push(WinGetProcessName(this_id))
     }
-    ENL_p.Push(WinGetProcessName(this_id))
     hased :=0
+}
+
+ExeWork_ItemSelect(ExeWork, Item, Selected){
+    if(Selected){
+
+    }
+}
+ClickSAVE(thisGui, *){
 }
 
 Config.Show("AutoSize Center")

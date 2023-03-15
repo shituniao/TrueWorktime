@@ -6,7 +6,7 @@ TraySetIcon(, , 1) ;冻结托盘图标
 
 ;读取ini文件
 WorkExe:=StrSplit(IniRead("Config.ini","exelist","workexe"),",") ;工作软件列表
-SitLimit:=5 ; 久坐时间
+SitLimit:=1800 ; 久坐时间
 ;WorkExe:=["HarmonyPremium.exe", "PureRef.exe", "tim.exe"] 
 
 ;计时器悬浮窗
@@ -35,14 +35,20 @@ Config.SetFont("s10","Microsoft YaHei UI")
 Config.AddText("y+10","目前设置的工作软件：")
 WorkList :=Config.AddEdit("y+10 w300 R9 vWorkList ReadOnly Backgrounddddddd Border",)
 Config.AddText("y+15","添加新的工作软件：")
-ExeWork :=Config.AddListBox("y+10 R9 vExeWork w300 Choose1 ",)
+ExeWork :=Config.AddListView("y+10 xm r9 vExeWork w300 -Hdr -Multi",["名称"])
+ExeWorkIcon := IL_Create()
+ExeWork.SetImageList(ExeWorkIcon)
+ExeWork.ModifyCol(1, 250)
+ExeWork.OnEvent("ItemSelect",ExeWork_ItemSelect)
 Config.Add("Button", "y+10 w80", "➕添加").OnEvent("Click", ClickADD)
-Config.Add("Button", "x+30 w80", "♾️刷新").OnEvent("Click", ClickREFRESH)
+Config.Add("Button", "x+30 w80", "❔刷新").OnEvent("Click", ClickREFRESH)
 Config.Add("Button", "x+30 w80", "❌清空").OnEvent("Click", ClickCLEAR)
-;Config.Add("Button", "xm w80 w300", "✔️保存").OnEvent("Click", ClickCLEAR)
-Config.AddText("y+10 xm w300","提示 :`n将你认为是工作用的软件添加到上面的列表中，`n（如果列表中没有要选的软件，尝试先打开这个软件，然后点击刷新按钮，程序会自动检测）").SetFont("s9 c444444")
+;Config.Add("Button", "xm w80 w300", "✔️提交").OnEvent("Click", ClickSUBMIT)
+Config.AddText("y+10 xm w300","选择你认为是工作用的软件，点击添加按钮").SetFont("s10 c000000")
+Config.AddText("y+2 xm w300","如果列表中没有要选的软件，尝试先打开这个软件，然后点击刷新按钮，程序会自动检测").SetFont("s9 c444444")
 Caution :=Config.AddText("y+10 vCaution w300")
 Caution.SetFont("s9 c444444")
+SelectItem:=["",1]
 
 ;帮助窗口
 Help:=Gui()
@@ -139,15 +145,7 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
         }
     Case 7 :
         {
-            Config.Show("AutoSize Center")
-            WorkL:=""
-            for n in WorkExe{
-                WorkL .=StrSplit(n,".exe")[1] "`n"
-            }
-            WorkList.Value:=WorkL
-            ExeWork.Delete()
-            ExeWork.Add(GetExeNameList())
-            ExeWork.Choose(1)
+            ShowConfig()
         }
     Case 9:
         {
@@ -167,62 +165,96 @@ MonitorChoose(ItemName, ItemPos, MyMenu){
 ClickADD(thisGui, *)
 {
     hased :=0
-    Choosed := thisGui.Gui.Submit(0).ExeWork
-    for n in WorkExe{
-        if ((Choosed ".exe") =n){
-            hased :=1
-            Break
+    ;Choosed := thisGui.Gui.Submit(0).SelectItem
+    if(SelectItem[1]!=""){
+        for n in WorkExe{
+            if ((SelectItem[1] ".exe") =n){
+                hased :=1
+                Break
+            }
         }
-    }
-    if(hased =0){
-        WorkExe.Push(Choosed ".exe")
-        Caution.Value := "添加成功！"
+        if(hased =0){
+            WorkExe.Push(SelectItem[1] ".exe")
+            WorkList.Value.=SelectItem[1] "`n"
+            Caution.Value := "添加成功！"
+        }else{
+            Caution.Value := "这个软件已经添加过了！"
+        }
+        iniCache:="workexe="
+        for n in WorkExe{
+            iniCache .=n ","
+        }
+        ;写入ini文件
+        iniCache := RTrim(iniCache,",")
+        IniWrite iniCache,"Config.ini","exelist"
     }else{
-        Caution.Value := "这个软件已经添加过了！"
+        Caution.Value := "你选了啥？"
     }
-    iniCache:="workexe="
-    for n in WorkExe{
-        iniCache .=n ","
-    }
-    ;写入ini文件
-    iniCache := RTrim(iniCache,",")
-    IniWrite iniCache,"Config.ini","exelist"
-    ;MsgBox(iniCache)
-    for n in WorkExe{
-        WorkL .=StrSplit(n,".exe")[1] "`n" 
-    }
-    WorkList.Value:=WorkL
 }
 
 ClickREFRESH(thisGui, *){
-    ExeWork.Delete()
-    ExeWork.Add(GetExeNameList())
-    ExeWork.Choose(1)
+    ids := WinGetList() ;获取当前程序列表
+    hased :=0
+    for this_id in ids
+    {
+        Loop ExeWork.GetCount()
+        {
+            if(ExeWork.GetText(A_Index)=StrSplit(WinGetProcessName(this_id),".exe")[1]){
+                hased:=1
+                Break
+            }
+        }
+        for n in WorkExe
+        {
+            if(n=WinGetProcessName(this_id)){
+                hased:=1
+                Break
+            }
+        }
+        if (hased =0){
+            ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
+            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(WinGetProcessName(this_id),".exe")[1])
+        }
+        hased :=0
+    }
     Caution.Value := "软件列表刷新完成！"
 }
 
 ClickCLEAR(thisGui, *){
-    WorkExe.RemoveAt(1, WorkExe.Length)
-    iniCache:="workexe="
-    for n in WorkExe{
-        iniCache .=n ","
+    if(WorkExe.Length >0){
+        WorkExe.RemoveAt(1, WorkExe.Length)
+        iniCache:="workexe="
+        for n in WorkExe{
+            iniCache .=n ","
+        }
+        ;写入ini文件
+        iniCache := RTrim(iniCache,",")
+        IniWrite iniCache,"Config.ini","exelist"
+        WorkList.Value:=""
+        Caution.Value := "工作软件已清空！"
+    }else{
+        Caution.Value := "已经是空的了啊！"
     }
-    ;写入ini文件
-    iniCache := RTrim(iniCache,",")
-    IniWrite iniCache,"Config.ini","exelist"
-    ;IniWrite "workexe=","Config.ini","exelist"
-    WorkList.Value:=""
-    Caution.Value := "工作软件已清空！"
+
 }
 
-ClickSAVE(thisGui, *){
+ExeWork_ItemSelect(EW, Item, Selected){
+    if(Selected){
+        SelectItem[1]:=EW.GetText(Item)
+        SelectItem[2]:=Item
+        ;MsgBox(SelectItem[1] " " SelectItem[2])
+    }
+}
+
+ShowConfig(){
+    Config.Show("AutoSize Center")
+    ExeWork.Focus()
+    WorkCACHE:=""
+    for n in WorkExe{
+        WorkCACHE .=StrSplit(n,".exe")[1] "`n"
+    }
+    WorkList.Value:=WorkCACHE
     ExeWork.Delete()
-    ExeWork.Add(GetExeNameList())
-    ExeWork.Choose(1)
-    Caution.Value := "软件列表刷新完成！"
-}
-
-GetExeNameList(){
     ids := WinGetList() ;获取当前程序列表
     ENL_p :=[] ;程序列表去重
     ExeNameList :=[]
@@ -236,12 +268,13 @@ GetExeNameList(){
             }
         }
         if (hased =0){
-            ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
+            ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
+            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(WinGetProcessName(this_id),".exe")[1])
+            ENL_p.Push(WinGetProcessName(this_id))
         }
-        ENL_p.Push(WinGetProcessName(this_id))
         hased :=0
     }
-    Return ExeNameList
+    Return 
 }
 
 ;启动时检测是否程序列表为空
@@ -250,15 +283,7 @@ if(WorkExe.Length<=0){
     ;Sleep 5000 ; 让它显示 3 秒钟.
     ;TrayTip
     if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 64")="Yes"){
-        Config.Show("AutoSize Center")
-        WorkL:=""
-        for n in WorkExe{
-            WorkL .=StrSplit(n,".exe")[1] "`n"
-        }
-        WorkList.Value:=WorkL
-        ExeWork.Delete()
-        ExeWork.Add(GetExeNameList())
-        ExeWork.Choose(1)
+        ShowConfig()
     }
 }
 
