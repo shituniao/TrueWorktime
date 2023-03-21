@@ -199,21 +199,21 @@ ClickREFRESH(thisGui, *){
     {
         Loop ExeWork.GetCount()
         {
-            if(ExeWork.GetText(A_Index)=StrSplit(WinGetProcessName(this_id),".exe")[1]){
+            if(ExeWork.GetText(A_Index)=StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1]){
                 hased:=1
                 Break
             }
         }
         for n in WorkExe
         {
-            if(n=WinGetProcessName(this_id)){
+            if(n=StrTitle(WinGetProcessName(this_id))){
                 hased:=1
                 Break
             }
         }
         if (hased =0){
             ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
-            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(WinGetProcessName(this_id),".exe")[1])
+            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1])
         }
         hased :=0
     }
@@ -251,7 +251,7 @@ ShowConfig(){
     ExeWork.Focus()
     WorkCACHE:=""
     for n in WorkExe{
-        WorkCACHE .=StrSplit(n,".exe")[1] "`n"
+        WorkCACHE .=StrSplit(StrTitle(n),".exe")[1] "`n"
     }
     WorkList.Value:=WorkCACHE
     ExeWork.Delete()
@@ -269,8 +269,8 @@ ShowConfig(){
         }
         if (hased =0){
             ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
-            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(WinGetProcessName(this_id),".exe")[1])
-            ENL_p.Push(WinGetProcessName(this_id))
+            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1])
+            ENL_p.Push(StrTitle(WinGetProcessName(this_id)))
         }
         hased :=0
     }
