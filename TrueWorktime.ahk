@@ -204,13 +204,6 @@ ClickREFRESH(thisGui, *){
                 Break
             }
         }
-        for n in WorkExe
-        {
-            if(n=StrTitle(WinGetProcessName(this_id))){
-                hased:=1
-                Break
-            }
-        }
         if (hased =0){
             ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
             ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1])
