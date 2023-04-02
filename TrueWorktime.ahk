@@ -288,22 +288,28 @@ class StateLog {
         this.y:=WT
         this.WorkTime :=0
         this.BreakTime :=0
-        this.WorkIn :=2 ;计时器状态，1-工作中，2-摸鱼中，3-久坐提醒， 4-未设置工作软件
+        this.LeaveTime :=0
+        this.StartTime :=A_Now ;开始运行时间
+        this.RunTime :=0 ;总运行时间
+        this.WorkIn :=2 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
         this.sitTime :=0
         this.tomatoToggle:=IniRead("Config.ini","setting","tomato_alarm")
         this.check :=ObjBindMethod(this, "StateCheck")
         this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
     Start() {
+        FileAppend "START," FormatTime(, "HHmmss") "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
         SetTimer this.check, 1000
     }
     StateCheck() {
+        this.RunTime++
         if(WorkExe.Length<=0){
             WorkIn:=4
-            if(this.WorkIn !=4){
-                this.WorkIn:=4
+            if(this.WorkIn !=0){
+                this.WorkIn:=0
                 ClockGui.BackColor := "000000"
                 CoordText.SetFont("cffffff")
+                FileAppend "`n" "NOSET," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
             }
             CoordText.Value := "无工作软件"
         }else{
@@ -311,40 +317,56 @@ class StateLog {
                 this.WorkTime++
                 this.sitTime++
                 if (this.WorkIn != 1){
+                    if(this.WorkIn != 4){
+                        FileAppend "`n" "work," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                    }
                     this.WorkIn :=1
                     ClockGui.BackColor := "000000"
                     CoordText.SetFont("cffffff")
+
                 }
                 CoordText.Value := FormatSeconds(this.WorkTime)
+            }else if(A_TimeIdlePhysical>=30000){
+                this.LeaveTime++
+                this.sitTime:=0
+                if (this.WorkIn != 3){
+                    FileAppend "`n" "leave," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                    this.WorkIn :=3
+                    ClockGui.BackColor := "666666"
+                    CoordText.SetFont("cffffff")
+
+                }
+                CoordText.Value := FormatSeconds(this.LeaveTime)
             }else{
                 this.BreakTime++
+                this.sitTime++
                 if (this.WorkIn != 2){
+                    if(this.WorkIn != 4){
+                        FileAppend "`n" "break," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                    }
                     this.WorkIn :=2
                     ClockGui.BackColor := "ffffff"
                     CoordText.SetFont("c000000")
+
                 }
                 CoordText.Value := FormatSeconds(this.BreakTime)
-                ;关于久坐提醒部分的内容↓原理是根据非离开时间累计达到1800秒（30分钟）时抖动提醒
-                if(A_TimeIdlePhysical>=30000){
-                    this.sitTime:=0
-                }else{
-                    this.sitTime++
-                }
             }
-            if(this.tomatoToggle=1 and Mod(this.sitTime,SitLimit)>0 and Mod(this.sitTime,SitLimit)<3 and this.sitTime>SitLimit){
-                this.WorkIn :=3
+        }
+        if(this.tomatoToggle=1 and Mod(this.sitTime,SitLimit)>0 and Mod(this.sitTime,SitLimit)<3 and this.sitTime>SitLimit){
+            if (this.WorkIn != 4){
+                this.WorkIn :=4
                 ClockGui.BackColor := "ea4135"
                 CoordText.SetFont("cffffff")
                 CoordText.Value := "坐太久了"
             }
-            ; 托盘图标提示
         }
+        ; 托盘图标提示
         Switch this.WorkIn{
         Case 1:
-            A_IconTip := "计时中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
+            A_IconTip := "工作中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
         Case 2:
-            A_IconTip := "计时中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
-        Case 4:
+            A_IconTip := "摸鱼中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
+        Case 0:
             A_IconTip := "尚未设置工作软件`n右键图标选择设置" 
         }
     }
@@ -379,9 +401,12 @@ Help.AddText("xm y+10 w300","图例：").SetFont("s10 bold")
 Help.AddText("xp+10 y+10 w280","若当前软件是工作软件，且电脑在30秒内有键鼠操作，则会记录为工作时间，显示为黑底白字。")
 Help.AddText("y+10 BackGround000000 cffffff h8 w" bannerWidth " Center","")
 Help.AddText("y+0 BackGround000000 cffffff h30 w" bannerWidth " Center","06:29:01").SetFont("s12")
-Help.AddText("y+10 w280","若当前软件不是工作软件，或超过30秒没有操作，则会记录为空闲时间，显示为白底黑字。")
+Help.AddText("y+10 w280","若当前软件不是工作软件，则会记录为空闲时间，显示为白底黑字。")
 Help.AddText("y+10 BackGroundffffff c000000 h8 w" bannerWidth " Center","")
 Help.AddText("y+0 BackGroundffffff c000000 h30 w" bannerWidth " Center","05:13:22").SetFont("s12")
+Help.AddText("y+10 w280","若超过30秒没有操作，则会记录为离开时间，显示为灰底白字。")
+Help.AddText("y+10 BackGroundffffff c666666 h8 w" bannerWidth " Center","")
+Help.AddText("y+0 BackGroundffffff c666666 h30 w" bannerWidth " Center","05:13:22").SetFont("s12")
 Help.AddText("y+10 w280","提供久坐提醒功能，当用户维持键鼠操作超过30分钟时，程序会显示红色久坐提示（这个功能可以关闭）")
 Help.AddText("y+10 BackGroundea4135 cffffff h8 w" bannerWidth " Center","")
 Help.AddText("y+0 BackGroundea4135 cffffff h30 w" bannerWidth " Center","坐太久了").SetFont("s12")
@@ -390,3 +415,10 @@ Help.AddText("xp+10 y+10 w280","本程序基于AutoHotkey 2.0.2编写`n由shitun
 Help.AddLink("y+10 w280", '<a href="https://www.autohotkey.com/">AutoHotkey官网</a>')
 Help.AddLink("y+5 w280", '<a href="https://github.com/shituniao/TrueWorktime">Github地址</a>')
 Help.AddLink("y+5 w280 h0",).Focus()
+
+OnExit ExitFunc
+
+ExitFunc(ExitReason, ExitCode)
+{
+    FileAppend "`n" "END," logger.RunTime "," FormatTime(, "HH:mm:ss"), logger.StartTime ".csv"
+}
