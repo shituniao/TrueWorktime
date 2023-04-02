@@ -1,5 +1,6 @@
-Version :="v1.0.0"
+Version :="v1.1.0"
 bannerWidth :=100
+FileEncoding "UTF-8"
 
 logger := StateLog() ;定义计时器对象
 TraySetIcon(, , 1) ;冻结托盘图标
@@ -420,5 +421,5 @@ OnExit ExitFunc
 
 ExitFunc(ExitReason, ExitCode)
 {
-    FileAppend "`n" "END," logger.RunTime "," FormatTime(, "HH:mm:ss"), logger.StartTime ".csv"
+    FileAppend "`n" "END," logger.RunTime "," FormatTime(, "HH:mm:ss") " 工作时间:" FormatSeconds(logger.WorkTime) "；摸鱼时间:" FormatSeconds(logger.BreakTime) "；离开时间:" FormatSeconds(logger.LeaveTime),logger.StartTime ".csv"
 }
