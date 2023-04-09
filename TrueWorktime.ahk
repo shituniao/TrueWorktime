@@ -299,7 +299,7 @@ class StateLog {
         this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
     Start() {
-        FileAppend "START," FormatTime(, "HHmmss") "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+        FileAppend "START," (A_Hour*3600+A_Min*60+A_Sec) "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
         SetTimer this.check, 1000
     }
     StateCheck() {

@@ -1,4 +1,6 @@
-Config :=Gui()
+;MsgBox(A_Hour*3600+A_Min*60+A_Sec)
+
+/*Config :=Gui()
 Config.Title :="工作计时器"
 Config.MarginX :=12
 Config.MarginY :=15
