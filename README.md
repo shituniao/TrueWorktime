@@ -21,6 +21,6 @@
 
 ### 本程序基于AutoHotkey 2.0.2编写  
 ### 由shituniao制作
-
+### 时长统计图程序部分由C.Even编写
 
 

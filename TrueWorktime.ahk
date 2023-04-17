@@ -417,7 +417,7 @@ Help.AddText("y+10 w280","提供久坐提醒功能，当用户维持键鼠操作
 Help.AddText("y+10 BackGroundea4135 cffffff h8 w" bannerWidth " Center","")
 Help.AddText("y+0 BackGroundea4135 cffffff h30 w" bannerWidth " Center","坐太久了").SetFont("s12")
 Help.AddText("xm y+20 w300","作者与联系方式：").SetFont("s10 bold")
-Help.AddText("xp+10 y+10 w280","本程序基于AutoHotkey 2.0.2编写`n由shituniao制作")
+Help.AddText("xp+10 y+10 w280","本程序基于AutoHotkey 2.0.2编写`n由shituniao制作`n时长统计图程序部分由C.Even编写")
 Help.AddLink("y+10 w280", '<a href="https://www.autohotkey.com/">AutoHotkey官网</a>')
 Help.AddLink("y+5 w280", '<a href="https://github.com/shituniao/TrueWorktime">Github地址</a>')
 Help.AddLink("y+5 w280 h0",).Focus()
