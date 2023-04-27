@@ -315,7 +315,7 @@ class StateLog {
                 this.WorkIn:=0
                 ClockGui.BackColor := "000000"
                 CoordText.SetFont("cffffff")
-                FileAppend "`n" "NOSET," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                FileAppend "`n" "NONE," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
             }
             CoordText.Value := "无工作软件"
         }else{
@@ -369,9 +369,9 @@ class StateLog {
         ; 托盘图标提示
         Switch this.WorkIn{
         Case 1:
-            A_IconTip := "工作中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
+            A_IconTip := "工作中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime) "`n离开时间：" FormatSeconds(this.LeaveTime)
         Case 2:
-            A_IconTip := "摸鱼中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime)
+            A_IconTip := "摸鱼中...`n工作时间：" FormatSeconds(this.WorkTime) "`n摸鱼时间：" FormatSeconds(this.BreakTime) "`n离开时间：" FormatSeconds(this.LeaveTime)
         Case 0:
             A_IconTip := "尚未设置工作软件`n右键图标选择设置" 
         }
