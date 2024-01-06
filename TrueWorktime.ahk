@@ -295,7 +295,7 @@ class StateLog {
         this.WorkTime :=0
         this.BreakTime :=0
         this.LeaveTime :=0
-        this.StartTime :="ShowWorkTime\assets\" . FormatTime(,"yyyy-MM-dd") . WeekDay() ;开始运行时间
+        this.StartTime :="ShowWorkTime\assets\" . FormatTime(,"yyyy-MM-dd") . WeekDay() ;开始运行时间，包括Showworktime的目录地址
         this.RunTime :=0 ;总运行时间
         this.WorkIn :=2 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
         this.sitTime :=0
@@ -304,7 +304,8 @@ class StateLog {
         this.tmtAlarm :=ObjBindMethod(this, "TomatoAlarm")
     }
     Start() {
-        FileAppend "START," (A_Hour*3600+A_Min*60+A_Sec) "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+        ;暂时将此行注释，因为不打算用cherrysoda了
+        ;FileAppend "START," (A_Hour*3600+A_Min*60+A_Sec) "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
         SetTimer this.check, 1000
     }
     StateCheck() {
@@ -315,7 +316,8 @@ class StateLog {
                 this.WorkIn:=0
                 ClockGui.BackColor := "000000"
                 CoordText.SetFont("cffffff")
-                FileAppend "`n" "NONE," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                ;暂时将此行注释，因为不打算用cherrysoda了
+                ;FileAppend "`n" "NONE," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
             }
             CoordText.Value := "无工作软件"
         }else{
@@ -324,7 +326,8 @@ class StateLog {
                 this.sitTime++
                 if (this.WorkIn != 1){
                     if(this.WorkIn != 4){
-                        FileAppend "`n" "work," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                        ;暂时将此行注释，因为不打算用cherrysoda了
+                        ;FileAppend "`n" "work," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
                     }
                     this.WorkIn :=1
                     ClockGui.BackColor := "000000"
@@ -336,7 +339,8 @@ class StateLog {
                 this.LeaveTime++
                 this.sitTime:=0
                 if (this.WorkIn != 3){
-                    FileAppend "`n" "leave," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                    ;暂时将此行注释，因为不打算用cherrysoda了
+                    ;FileAppend "`n" "leave," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
                     this.WorkIn :=3
                     ClockGui.BackColor := "666666"
                     CoordText.SetFont("cffffff")
@@ -348,7 +352,8 @@ class StateLog {
                 this.sitTime++
                 if (this.WorkIn != 2){
                     if(this.WorkIn != 4){
-                        FileAppend "`n" "break," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
+                        ;暂时将此行注释，因为不打算用cherrysoda了
+                        ;FileAppend "`n" "break," this.RunTime "," FormatTime(, "HH:mm:ss"), this.StartTime ".csv"
                     }
                     this.WorkIn :=2
                     ClockGui.BackColor := "ffffff"
@@ -426,7 +431,8 @@ OnExit ExitFunc
 
 ExitFunc(ExitReason, ExitCode)
 {
-    FileAppend "`n" "END," logger.RunTime "," FormatTime(, "HH:mm:ss") " 工作时间:" FormatSeconds(logger.WorkTime) "；摸鱼时间:" FormatSeconds(logger.BreakTime) "；离开时间:" FormatSeconds(logger.LeaveTime) "`n",logger.StartTime ".csv"
+    ;暂时将此行注释，因为不打算用cherrysoda了
+    ;FileAppend "`n" "END," logger.RunTime "," FormatTime(, "HH:mm:ss") " 工作时间:" FormatSeconds(logger.WorkTime) "；摸鱼时间:" FormatSeconds(logger.BreakTime) "；离开时间:" FormatSeconds(logger.LeaveTime) "`n",logger.StartTime ".csv"
 }
 
 ;换算周几的字符
