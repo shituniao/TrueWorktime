@@ -1,8 +1,23 @@
 Version :="v1.1.0"
+FileEncoding "UTF-8"
+;引入外部JSON库，来自https://github.com/G33kDude/cJson.ahk
+FileInstall "JSON.ahk", "JSON.ahk" ,1 ;把JSON.ahk写入exe文件里
+FileInstall "ItemdataDEF.json", "ItemdataDEF.json" ,1 ;把保底JSON写入exe文件里
+FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
+#Include JSON.ahk 
+
 bannerWidth :=90
 ItemWidth :=60
-IdleLimit:=30000 ;无操作超时30秒
-FileEncoding "UTF-8"
+TipsWidth :=bannerWidth+ItemWidth
+IdleLimit:=30000 ;无操作超时30秒（30000毫秒
+SitLimit:=1800 ; 久坐时间（秒
+Try{
+    WorkExe:=StrSplit(IniRead("Config.ini","data","workexe"),",") ;工作软件列表
+}Catch{
+    OutputDebug "文件不存在，使用保底文件"
+    WorkExe:=StrSplit(IniRead("ConfigDEF.ini","data","workexe"),",")
+    FileCopy("ConfigDEF.ini","Config.ini")
+}
 
 ;主题颜色map
 Theme := Map()
@@ -21,41 +36,34 @@ Theme["whiteT"]:="000000"
 Theme["gray"]:="919191"
 Theme["grayT"]:="1f1f1f"
 
-;引入外部JSON库，来自https://github.com/G33kDude/cJson.ahk
-#Include JSON.ahk 
+;JSON读取
+Try{
+    ItemJson:=FileRead("Itemdata.json")
+}Catch{
+    Try{
+        OutputDebug "文件不存在，使用备份文件"
+        ItemJson:=FileRead("ItemdataBAK.json")
+        FileCopy("ItemdataBAK.json","Itemdata.json")
+    }Catch{
+        OutputDebug "备份文件不存在，使用保底文件"
+        ItemJson:=FileRead("ItemdataDEF.json")
+        FileCopy("ItemdataDEF.json","Itemdata.json")
+        FileCopy("ItemdataDEF.json","ItemdataBAK.json")
 
-;--------关于JSON读取和写入的测试
-;objstr := [{start:"sss",time:1234,color:"ff0000"},{start:"bbb",time:1234,color:"ff0000"}]
-;OutputDebug objstr[1].start
-;jsonstr :=JSON.Dump(objstr)
-;FileAppend jsonstr,"test.json"
-ItemJson:=FileRead("Itemdata.json")
-;OutputDebug jsona
+    }
+}
+
 Items:=JSON.Load(ItemJson)
-;Items[1]['time']+=1
-;OutputDebug jsonb
-;--------关于JSON读取和写入的测试
 
 logger := StateLog() ;定义计时器对象
 TraySetIcon(, , 1) ;冻结托盘图标
-
-;读取ini文件
-WorkExe:=StrSplit(IniRead("Config.ini","data","workexe"),",") ;工作软件列表
-SitLimit:=1800 ; 久坐时间
-;WorkExe:=["HarmonyPremium.exe", "PureRef.exe", "tim.exe"] 
 
 ;计时器悬浮窗
 ClockGui := Gui()
 ClockGui.Opt("+AlwaysOnTop -Caption +ToolWindow +DPIScale" ) ; +ToolWindow 避免显示任务栏按钮和 alt-tab 菜单项.
 ClockGui.MarginY:=4
-ClockGui.BackColor := Theme["white"] ; 初始白色背景(下面会变成半透明的).
+ClockGui.BackColor := Theme["black"] ; 初始白色背景(下面会变成半透明的).
 ClockGui.SetFont("s12","Microsoft YaHei UI") 
-if(WorkExe.Length>0){
-    ClockText := ClockGui.Add("Text", "x0 ym r1 w" bannerWidth " c" Theme["whiteT"] " Center", "预备") 
-}else{
-    ClockGui.BackColor := Theme["black"]
-    ClockText := ClockGui.Add("Text", "x0 ym r1 w" bannerWidth " c" Theme["blackT"] " Center", "无工作软件") 
-}
 WinSetTransColor(" 230", ClockGui) ; 半透明:
 WinSetExStyle("+0x20", ClockGui) ;鼠标穿透
 ClockGui.Show("x" logger.x "y" logger.y " h30 w" bannerWidth " NoActivate") ; NoActivate 让当前活动窗口继续保持活动状态.
@@ -64,12 +72,21 @@ ClockGui.Show("x" logger.x "y" logger.y " h30 w" bannerWidth " NoActivate") ; No
 ItemGui := Gui()
 ItemGui.Opt("+AlwaysOnTop -Caption +ToolWindow +DPIScale" )
 ItemGui.MarginY:=4
-ItemGui.BackColor := Theme["gray"] ;红f92f60/ffd8d9黄ffc700/7d4533蓝1c5cd7/aeddff绿008463/c6fbe7
+ItemGui.BackColor := Items[logger.CurrentItem]['theme'] ;红f92f60/ffd8d9黄ffc700/7d4533蓝1c5cd7/aeddff绿008463/c6fbe7
 ItemGui.SetFont("s12","Microsoft YaHei UI") 
-ItemText :=ItemGui.Add("Text","x0 ym r1 w" ItemWidth " c" Theme["grayT"] " Center", FormatSeconds(Items[logger.CurrentItem]['time'],False))
+ItemText :=ItemGui.Add("Text","x0 ym r1 w" ItemWidth " c" Items[logger.CurrentItem]['themeT'] " Center", FormatSeconds(Items[logger.CurrentItem]['time'],False))
 WinSetTransColor(" 230", ItemGui) ; 半透明:
 WinSetExStyle("+0x20", ItemGui) ;鼠标穿透
 ItemGui.Show("x" logger.x-ItemWidth "y" logger.y " h30 w" ItemWidth " NoActivate")
+
+;当前项目小条和久坐提醒浮窗
+TipsGui :=Gui()
+TipsGui.Opt("+AlwaysOnTop -Caption +ToolWindow +DPIScale" )
+TipsGui.MarginY:=4
+TipsGui.BackColor := Theme["white"]
+TipsGui.SetFont("s12","Microsoft YaHei UI") 
+TipsText :=TipsGui.Add("Text","x0 ym r1 w" TipsWidth " c" Theme["whiteT"] " Center")
+WinSetExStyle("+0x20", TipsGui) ;鼠标穿透
 
 ;计时器设置窗口
 Config :=Gui()
@@ -102,108 +119,47 @@ Help.MarginX :=12
 Help.MarginY :=15
 Help.SetFont("s9 c444444","Microsoft YaHei UI")
 
-logger.Start ;✅✅✅✅✅✅--------------------启动计时器-----------------------
-
-;定义托盘图标
+;定义托盘菜单
 A_TrayMenu.Rename("E&xit","退出")
 A_TrayMenu.Delete("&Suspend Hotkeys")
 A_TrayMenu.Delete("&Pause Script")
-A_TrayMenu.Insert("1&", "暂停", MenuHandler)
-A_TrayMenu.Insert("2&", "重置", MenuHandler)
+ItemMenu :=Menu()
+Loop Items.Length{
+    ItemMenu.Add(A_Index "：" FormatSeconds(Items[A_Index]["time"],False),ItemSwitch) ;发现项目名字不能一样（Why？？？）
+    ItemMenu.SetIcon(A_Index "&" ,"ItemIcon.dll",A_Index)
+}
+ItemMenu.Default:=logger.CurrentItem "&" ;用打勾的方式显示当前项目会覆盖掉颜色图标（可恶）所以改成默认项的加粗显示
+
+A_TrayMenu.Insert("1&", "切换项目", ItemMenu)
+A_TrayMenu.Insert("2&", "当前项目归零", MenuHandler)
 A_TrayMenu.Insert("3&")
-A_TrayMenu.Insert("4&", "久坐30分钟提醒", MenuHandler)
-if(logger.tomatoToggle){
-    A_TrayMenu.check("4&")
-}else{
-    A_TrayMenu.UnCheck("4&")
-}
-A_TrayMenu.Insert("5&", "显示顶部浮窗", MenuHandler)
-if(IniRead("Config.ini","setting","show","1")="1"){
-    A_TrayMenu.check("5&")
-}else{
-    A_TrayMenu.UnCheck("5&")
-}
-MonitorMenu :=Menu()
-A_TrayMenu.Insert("6&", "顶部浮窗显示在...", MonitorMenu)
-Loop MonitorGetCount(){
-    MonitorMenu.Add("显示器" A_Index , MonitorChoose)
-}
-A_TrayMenu.Insert("7&", "设置工作软件", MenuHandler)
-A_TrayMenu.Insert("8&")
-A_TrayMenu.Insert("9&", "帮助", MenuHandler)
-A_TrayMenu.Insert("10&", "显示统计图", MenuHandler)
+A_TrayMenu.Insert("4&", "设置", MenuHandler)
+A_TrayMenu.Insert("5&", "帮助", MenuHandler)
+A_TrayMenu.Insert("6&")
+A_TrayMenu.Default:="4&"
 
-A_TrayMenu.Default:="10&"
-
-;Persistent
-;托盘控件功能及程序设置界面
+;托盘菜单功能函数
 MenuHandler(ItemName, ItemPos, MyMenu) {
     Switch ItemPos{
-    Case 4 :
+    Case 2:
         {
-            logger.sitTime:=0
-            if(logger.tomatoToggle){
-                logger.tomatoToggle:=0
-                A_TrayMenu.Uncheck("4&")
-            }else{
-                logger.tomatoToggle:=1
-                A_TrayMenu.Check("4&")
-            }
-            IniWrite logger.tomatoToggle,"Config.ini","setting","tomato_alarm"
+            ResetItem()
         }
-    Case 1:
-        {
-            Pause -1
-            if(A_IsPaused){
-                A_IconTip := "计时器已暂停`n工作时间：" FormatSeconds(logger.WorkTime) "`n摸鱼时间：" FormatSeconds(logger.BreakTime)
-                A_TrayMenu.Rename("1&","继续")
-                TrayTip , "计时器已暂停"
-                Sleep 2000 ; 让它显示 3 秒钟.
-                TrayTip
-            }else{
-                A_TrayMenu.Rename("1&","暂停")
-                TrayTip , "计时器已继续"
-                Sleep 2000 ; 让它显示 3 秒钟.
-                TrayTip
-            }
-        }
-
-    Case 2 :
-        {
-            logger.WorkTime :=0
-            logger.BreakTime :=0
-            ClockText.Value := FormatSeconds(logger.WorkTime)
-            TrayTip , "计时器已重置"
-            Sleep 2000 ; 让它显示 3 秒钟.
-            TrayTip
-        }
-    Case 5:
-        {
-            if(IniRead("Config.ini","setting","show","1")="1"){
-                A_TrayMenu.uncheck("5&")
-                ClockGui.Hide()
-                IniWrite "0","Config.ini","setting","show"
-            }else{
-                A_TrayMenu.Check("5&")
-                ClockGui.Show()
-                IniWrite "1","Config.ini","setting","show"
-            }
-        }
-    Case 7 :
+    Case 4:
         {
             ShowConfig()
         }
-    Case 9:
+    Case 5:
         {
             Help.Show("AutoSize Center")
-        }
-    Case 10:
-        {
-            Run "ShowWorkTime", "ShowWorkTime\"
         }
     }
 }
 ;---------------------用到的各种托盘功能函数👇--------------------------------------
+ItemSwitch(ItemName, ItemPos, MyMenu){
+    ChangeItem(ItemPos)
+    MyMenu.Default:=ItemPos "&"
+}
 MonitorChoose(ItemName, ItemPos, MyMenu){
     MonitorGet ItemPos, &WL, &WT, &WR, &WB
     logger.x := WR/(A_ScreenDPI/96)-(bannerWidth + 137)
@@ -328,13 +284,24 @@ if(WorkExe.Length<=0){
     ;TrayTip "右键点击任务栏图标进行设置", "尚未设置工作软件"
     ;Sleep 5000 ; 让它显示 3 秒钟.
     ;TrayTip
-    if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 64")="Yes"){
-        ShowConfig()
-    }
 }
 ;---------------------------软件设置窗口的功能函数👆----------------------------------
 
-;计时器类（核心程序
+;-------------------启动时第一次检查-----------------------
+if(WorkExe.Length>0){
+    ClockText := ClockGui.Add("Text", "x0 ym r1 w" bannerWidth " c" Theme["blackT"] " Center", "准备") 
+}else{
+    ClockGui.BackColor := Theme["black"]
+    ClockText := ClockGui.Add("Text", "x0 ym r1 w" bannerWidth " c" Theme["blackT"] " Center", "未设置软件")
+    if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 64")="Yes"){
+        ShowConfig()
+    } 
+}
+
+;✅✅✅✅✅✅启动计时器✅✅✅✅✅✅
+logger.Start 
+
+;⭐⭐⭐⭐⭐⭐计时器类（核心程序⭐⭐⭐⭐⭐⭐
 class StateLog {
     __New(){
         MonitorGet IniRead("Config.ini","setting","monitor"), &WL, &WT, &WR, &WB
@@ -348,7 +315,7 @@ class StateLog {
         this.RunTime :=0 ;总运行时间
         this.State :=2 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
         this.sitTime :=0
-        this.tomatoToggle:=IniRead("Config.ini","setting","tomato_alarm")
+        this.SitAlarmToggle:=IniRead("Config.ini","setting","sit_alarm")
         this.check :=ObjBindMethod(this, "StateCheck")
     }
     Start() {
@@ -374,7 +341,7 @@ class StateLog {
                         Items[logger.CurrentItem]['start']:= FormatTime(,"yyyy-MM-dd HH:mm:ss") ;检查项目计时是否为零
                     }
                     Items[this.CurrentItem]['time']++
-                    ChangeItem(this.CurrentItem) ;修改Item悬浮窗
+                    ;ChangeItem(this.CurrentItem) ;修改Item悬浮窗
                     ChangeGui(1) ;修改Clock悬浮窗
                     JsonFileReUpdate() ;更新JSON文件
                 }Else{
@@ -383,7 +350,10 @@ class StateLog {
                     this.sitTime++
                 }
             }
-
+            if(this.SitAlarmToggle==1 and this.sitTime>SitLimit){
+                this.sitTime:=0
+                SitAlarm()
+            }
             ; 托盘图标提示
             Switch this.State{
             Case 1:
@@ -393,6 +363,7 @@ class StateLog {
             Case 0:
                 A_IconTip := "尚未设置工作软件`n右键图标选择设置" 
             }
+
         }
     }
 }
@@ -401,7 +372,6 @@ ifwinAct() ;判断当前软件是否为工作软件
 {
     for app in WorkExe{
         if(WinActive("ahk_exe " app)){
-            ;MsgBox(WorkExe.Length)
             Return 1
         }
     }
@@ -432,32 +402,43 @@ WeekDay(){
         Case "6": Return "_Friday"
         Case "7": Return "_Saturday"
     }
-
 }
 
 ;修改悬浮窗
 ChangeGui(stateNew){
-    textValue:=[logger.WorkTime,logger.BreakTime,logger.BreakTime] ;用数组保存各个状态的计时，在下面调用👇  [1]工作时间  [2][3]摸鱼时间
-    if(stateNew!=0){
-        ClockText.Value := FormatSeconds(textValue[stateNew]) ;调用数组对应工作状态计时👆
-    }Else{
-        ClockText.Value := "未设置软件"
-    }
-    ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
     if(stateNew!=logger.State){
         logger.State:=stateNew
-        if(stateNew ==1){
+    }
+    Switch stateNew{
+    Case 0:
+        {
+            ClockText.Value := "未设置软件"
+            ClockGui.BackColor := Theme["black"]
+            ClockText.SetFont("c" Theme["blackT"])
+            ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
+            ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
+            ClockGui.Move(,,,30)
+            ItemGui.Move(,,,30)
+        }
+    Case 1:
+        {
             ClockGui.BackColor := Theme["black"]
             ClockText.SetFont("c" Theme["blackT"])
             ItemGui.BackColor := Items[logger.CurrentItem]['theme']
             ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
-        }else{
-            ClockGui.BackColor := Theme["white"]
-            ClockText.SetFont("c" Theme["whiteT"])
-            ItemGui.BackColor := Theme["gray"]
-            ItemText.SetFont("c" Theme["grayT"])
+            ClockText.Value :=FormatSeconds(logger.WorkTime)
+            ClockGui.Move(,,,30)
+            ItemGui.Move(,,,30)
+        }
+    Default:
+        {
+            ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
+            ClockGui.Move(,,,1)
+            ItemGui.Move(,,,1)
+            ClockText.Value :=FormatSeconds(logger.BreakTime)
         }
     }
+    ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
 }
 
 ;切换Item
@@ -465,22 +446,46 @@ ChangeItem(Item){
     logger.CurrentItem := Item
     ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
     IniWrite Item, "Config.ini","data","current_item"
+    ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
     if(logger.State==1){ 
-        ItemGui.BackColor := Items[logger.CurrentItem]['theme']
-        ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
-        ;OutputDebug Items[logger.CurrentItem]['time']
-    } 
+        ItemGui.BackColor := Items[logger.CurrentItem]['theme'] 
+    }Else{
+        ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
+    }
 }
-;重置当前项目
+
+CloseTips(){
+    TipsGui.Hide()
+}
+
+;归零当前项目
 ResetItem(){
     Items[logger.CurrentItem]['time']:=0
     JsonFileReUpdate()
     ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
+    TipsText.SetFont("c000000")
+    TipsGui.Show("x" logger.x-ItemWidth "y" logger.y " h30 w" TipsWidth " NoActivate")
+    TipsText.Value:="-归零-"
+    SetTimer(CloseTips,-500)
+    OutputDebug "项目" logger.CurrentItem "已归零"
 }
 
+;久坐提醒
+SitAlarm(){
+    TipsGui.BackColor:="ffffff"
+    TipsText.SetFont("cea4135")
+    TipsGui.Show("x" logger.x-ItemWidth "y" logger.y " h30 w" TipsWidth " NoActivate")
+    TipsText.Value:="⚠️久坐⚠️"
+    SetTimer(CloseTips,-800)
+}
 ;JSON文件更新
 JsonFileReUpdate(){
-    FileDelete "Itemdata.json"
+    Try{
+        FileCopy("Itemdata.json","ItemdataBAK.json",1)
+    }
+    Try{
+        FileDelete "Itemdata.json"
+    }
     FileAppend JSON.Dump(Items),"Itemdata.json"
 }
 ;快捷键部分
