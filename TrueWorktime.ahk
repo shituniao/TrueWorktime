@@ -4,13 +4,16 @@ FileEncoding "UTF-8"
 FileInstall "JSON.ahk", "JSON.ahk" ,1 ;把JSON.ahk写入exe文件里
 FileInstall "ItemdataDEF.json", "ItemdataDEF.json" ,1 ;把保底JSON写入exe文件里
 FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
+FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
+;FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"   创建开机启动
 #Include JSON.ahk 
 
-bannerWidth :=90
+ClockWidth :=90
+ClockHeight :=30
 ItemWidth :=60
-TipsWidth :=bannerWidth+ItemWidth
+TipsWidth :=ClockWidth+ItemWidth
 IdleLimit:=30000 ;无操作超时30秒（30000毫秒
-SitLimit:=1800 ; 久坐时间（秒
+SitLimit:=1800 ; 久坐时间（秒-----此功能已废除
 Try{
     WorkExe:=StrSplit(IniRead("Config.ini","data","workexe"),",") ;工作软件列表
 }Catch{
@@ -64,9 +67,10 @@ ClockGui.Opt("+AlwaysOnTop -Caption +ToolWindow +DPIScale" ) ; +ToolWindow 避�
 ClockGui.MarginY:=4
 ClockGui.BackColor := Theme["black"] ; 初始白色背景(下面会变成半透明的).
 ClockGui.SetFont("s12","Microsoft YaHei UI") 
-WinSetTransColor(" 230", ClockGui) ; 半透明:
+;WinSetTransColor(" 0", ClockGui) ; 半透明:
 WinSetExStyle("+0x20", ClockGui) ;鼠标穿透
-ClockGui.Show("x" logger.x "y" logger.y " h30 w" bannerWidth " NoActivate") ; NoActivate 让当前活动窗口继续保持活动状态.
+ClockGui.Show("NoActivate") ; NoActivate 让当前活动窗口继续保持活动状态.
+ClockGui.Move(logger.x,logger.y,ClockWidth,ClockHeight)
 
 ;累计计时器悬浮窗
 ItemGui := Gui()
@@ -75,17 +79,18 @@ ItemGui.MarginY:=4
 ItemGui.BackColor := Items[logger.CurrentItem]['theme'] ;红f92f60/ffd8d9黄ffc700/7d4533蓝1c5cd7/aeddff绿008463/c6fbe7
 ItemGui.SetFont("s12","Microsoft YaHei UI") 
 ItemText :=ItemGui.Add("Text","x0 ym r1 w" ItemWidth " c" Items[logger.CurrentItem]['themeT'] " Center", FormatSeconds(Items[logger.CurrentItem]['time'],False))
-WinSetTransColor(" 230", ItemGui) ; 半透明:
+;WinSetTransColor(" 0", ItemGui) ; 半透明:
 WinSetExStyle("+0x20", ItemGui) ;鼠标穿透
-ItemGui.Show("x" logger.x-ItemWidth "y" logger.y " h30 w" ItemWidth " NoActivate")
+ItemGui.Show("NoActivate")
+ItemGui.Move(logger.x-ItemWidth,logger.y,ItemWidth,ClockHeight)
 
-;当前项目小条和久坐提醒浮窗
+;提醒浮窗
 TipsGui :=Gui()
 TipsGui.Opt("+AlwaysOnTop -Caption +ToolWindow +DPIScale" )
 TipsGui.MarginY:=4
 TipsGui.BackColor := Theme["white"]
 TipsGui.SetFont("s12","Microsoft YaHei UI") 
-TipsText :=TipsGui.Add("Text","x0 ym r1 w" TipsWidth " c" Theme["whiteT"] " Center")
+TipsText :=TipsGui.Add("Text","x0 ym r1 w" ItemWidth " c" Theme["whiteT"] " Center")
 WinSetExStyle("+0x20", TipsGui) ;鼠标穿透
 
 ;计时器设置窗口
@@ -162,8 +167,7 @@ ItemSwitch(ItemName, ItemPos, MyMenu){
 }
 MonitorChoose(ItemName, ItemPos, MyMenu){
     MonitorGet ItemPos, &WL, &WT, &WR, &WB
-    logger.x := WR/(A_ScreenDPI/96)-(bannerWidth + 137)
-    ;MsgBox(logger.x)
+    logger.x := WR/(A_ScreenDPI/96)-(ClockWidth + 137)
     logger.y := WT/(A_ScreenDPI/96)
     ClockGui.Move(logger.x,logger.y)
     IniWrite ItemPos,"Config.ini","setting","monitor"
@@ -289,10 +293,10 @@ if(WorkExe.Length<=0){
 
 ;-------------------启动时第一次检查-----------------------
 if(WorkExe.Length>0){
-    ClockText := ClockGui.Add("Text", "x0 ym r1 w" bannerWidth " c" Theme["blackT"] " Center", "准备") 
+    ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme["blackT"] " Center", "准备") 
 }else{
     ClockGui.BackColor := Theme["black"]
-    ClockText := ClockGui.Add("Text", "x0 ym r1 w" bannerWidth " c" Theme["blackT"] " Center", "未设置软件")
+    ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme["blackT"] " Center", "未设置软件")
     if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 64")="Yes"){
         ShowConfig()
     } 
@@ -305,17 +309,17 @@ logger.Start
 class StateLog {
     __New(){
         MonitorGet IniRead("Config.ini","setting","monitor"), &WL, &WT, &WR, &WB
-        this.x:=WR - (bannerWidth + 137)*(A_ScreenDPI/96)
-        this.y:=WT
+        this.x:=WR/(A_ScreenDPI/96) - (ClockWidth + 137)
+        this.y:=WT/(A_ScreenDPI/96)
         this.WorkTime :=0 ;工作时间
         this.BreakTime :=0 ;摸鱼时间
         this.LeaveTime :=0 ;离开时间
         this.CurrentItem :=IniRead("Config.ini","data","current_item") ;当前项目
         this.StartTime :=FormatTime(,"yyyy-MM-dd HH:mm:ss") ;本次计时开始运行时间
         this.RunTime :=0 ;总运行时间
-        this.State :=2 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
+        this.State :=1 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
         this.sitTime :=0
-        this.SitAlarmToggle:=IniRead("Config.ini","setting","sit_alarm")
+        this.BreakHide:=IniRead("Config.ini","setting","break_hide")
         this.check :=ObjBindMethod(this, "StateCheck")
     }
     Start() {
@@ -325,10 +329,10 @@ class StateLog {
         this.RunTime++
         if(WorkExe.Length<=0){ ;0-未设置工作软件
             this.State:=0
-            ChangeGui(0) ;修改Clock悬浮窗
+            ChangeGui(0) ;更新悬浮窗
         }else{
             if(A_TimeIdlePhysical>=IdleLimit){
-                ChangeGui(3) ;修改Clock悬浮窗
+                ChangeGui(3) ;更新悬浮窗
                 this.LeaveTime++
                 this.BreakTime++ ;改动：离开后时间也计入摸鱼时间
                 this.sitTime:=0
@@ -341,18 +345,13 @@ class StateLog {
                         Items[logger.CurrentItem]['start']:= FormatTime(,"yyyy-MM-dd HH:mm:ss") ;检查项目计时是否为零
                     }
                     Items[this.CurrentItem]['time']++
-                    ;ChangeItem(this.CurrentItem) ;修改Item悬浮窗
-                    ChangeGui(1) ;修改Clock悬浮窗
+                    ChangeGui(1) ;更新悬浮窗
                     JsonFileReUpdate() ;更新JSON文件
                 }Else{
-                    ChangeGui(2) ;修改Clock悬浮窗
+                    ChangeGui(2) ;更新悬浮窗
                     this.BreakTime++
                     this.sitTime++
                 }
-            }
-            if(this.SitAlarmToggle==1 and this.sitTime>SitLimit){
-                this.sitTime:=0
-                SitAlarm()
             }
             ; 托盘图标提示
             Switch this.State{
@@ -391,54 +390,62 @@ FormatSeconds(NumberOfSeconds,full := True) ; 把指定的秒数转换成 hh:mm:
     }
 }
 
-;换算周几的字符
-WeekDay(){
-    Switch A_WDay{
-        Case "1": Return "_Sunday"
-        Case "2": Return "_Monday"
-        Case "3": Return "_Tuesday"
-        Case "4": Return "_Wednesday"
-        Case "5": Return "_Thursday"
-        Case "6": Return "_Friday"
-        Case "7": Return "_Saturday"
-    }
+;窗口集体置顶
+AlwaysOnTop(){
+    ClockGui.Opt("+AlwaysOnTop")
+    ItemGui.Opt("+AlwaysOnTop")
+    TipsGui.Opt("+AlwaysOnTop")
 }
 
 ;修改悬浮窗
 ChangeGui(stateNew){
+    if(stateNew==1){
+        ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
+        ClockText.Value :=FormatSeconds(logger.WorkTime)
+    }
     if(stateNew!=logger.State){
         logger.State:=stateNew
+        Switch stateNew{
+        Case 0:
+            {
+                ClockText.Value := "未设置软件"
+                ClockGui.BackColor := Theme["black"]
+                ClockText.SetFont("c" Theme["blackT"])
+                ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
+                ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
+                ClockGui.Move(,,,30)
+                ItemGui.Move(,,,30)
+            }
+        Case 1:
+            {
+                ClockGui.BackColor := Theme["black"]
+                ClockText.SetFont("c" Theme["blackT"])
+                ItemGui.BackColor := Items[logger.CurrentItem]['theme']
+                ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
+                ClockGui.Move(,,,30)
+                ItemGui.Move(,,,30)
+                AlwaysOnTop()
+            }
+        Default:
+            {
+
+                if(logger.BreakHide){
+                    ClockGui.Move(,,,0)
+                    ItemGui.Move(,,,0)
+                }Else{
+                    ClockGui.BackColor := Theme["gray"]
+                    ClockText.SetFont("c" Theme["grayT"])
+                    ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
+                    ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
+
+                }
+                ;ClockText.Value :=FormatSeconds(logger.BreakTime)
+            }
+        }
+        ;OutputDebug "状态改变为" stateNew "，刷新Gui"
+    }Else{
+        ;OutputDebug "状态未改变仍然是" stateNew
     }
-    Switch stateNew{
-    Case 0:
-        {
-            ClockText.Value := "未设置软件"
-            ClockGui.BackColor := Theme["black"]
-            ClockText.SetFont("c" Theme["blackT"])
-            ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
-            ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
-            ClockGui.Move(,,,30)
-            ItemGui.Move(,,,30)
-        }
-    Case 1:
-        {
-            ClockGui.BackColor := Theme["black"]
-            ClockText.SetFont("c" Theme["blackT"])
-            ItemGui.BackColor := Items[logger.CurrentItem]['theme']
-            ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
-            ClockText.Value :=FormatSeconds(logger.WorkTime)
-            ClockGui.Move(,,,30)
-            ItemGui.Move(,,,30)
-        }
-    Default:
-        {
-            ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
-            ClockGui.Move(,,,1)
-            ItemGui.Move(,,,1)
-            ClockText.Value :=FormatSeconds(logger.BreakTime)
-        }
-    }
-    ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
 }
 
 ;切换Item
@@ -463,21 +470,19 @@ ResetItem(){
     Items[logger.CurrentItem]['time']:=0
     JsonFileReUpdate()
     ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
-    TipsText.SetFont("c000000")
-    TipsGui.Show("x" logger.x-ItemWidth "y" logger.y " h30 w" TipsWidth " NoActivate")
-    TipsText.Value:="-归零-"
-    SetTimer(CloseTips,-500)
+    TipsOn("-归零-",-500,Items[logger.CurrentItem]['theme'],Items[logger.CurrentItem]['themeT'])
     OutputDebug "项目" logger.CurrentItem "已归零"
 }
 
-;久坐提醒
-SitAlarm(){
-    TipsGui.BackColor:="ffffff"
-    TipsText.SetFont("cea4135")
-    TipsGui.Show("x" logger.x-ItemWidth "y" logger.y " h30 w" TipsWidth " NoActivate")
-    TipsText.Value:="⚠️久坐⚠️"
-    SetTimer(CloseTips,-800)
+TipsOn(text,life,color,colorT){
+    TipsGui.BackColor:=color
+    TipsText.SetFont("c" colorT)
+    TipsGui.Show("NoActivate")
+    TipsGui.Move(logger.x-ItemWidth,logger.y,ItemWidth,ClockHeight)
+    TipsText.Value:=text
+    SetTimer(CloseTips,life)
 }
+
 ;JSON文件更新
 JsonFileReUpdate(){
     Try{
@@ -509,6 +514,13 @@ JsonFileReUpdate(){
     {
         ResetItem()
     }
+^F6::
+    {
+        MonitorGet 1, &WL, &WT, &WR, &WB
+        ;logger.x := WR/(A_ScreenDPI/96)-(ClockWidth + 137)
+        ;logger.y := WT/(A_ScreenDPI/96)
+        ClockGui.Move(10,logger.y)
+    }
 
     ; 帮助文本
     Help.AddText("y+10 w300","说明：").SetFont("s10 bold")
@@ -516,17 +528,17 @@ JsonFileReUpdate(){
     Help.AddText("y+10 w280","程序每秒检测当前正在使用的软件是否是预先设定的工作软件，以及用户是否在30秒内有鼠标操作或键盘输入。")
     Help.AddText("xm y+10 w300","图例：").SetFont("s10 bold")
     Help.AddText("xp+10 y+10 w280","若当前软件是工作软件，且电脑在30秒内有键鼠操作，则会记录为工作时间，显示为黑底白字。")
-    Help.AddText("y+10 BackGround000000 cffffff h8 w" bannerWidth " Center","")
-    Help.AddText("y+0 BackGround000000 cffffff h30 w" bannerWidth " Center","06:29:01").SetFont("s12")
+    Help.AddText("y+10 BackGround000000 cffffff h8 w" ClockWidth " Center","")
+    Help.AddText("y+0 BackGround000000 cffffff h30 w" ClockWidth " Center","06:29:01").SetFont("s12")
     Help.AddText("y+10 w280","若当前软件不是工作软件，则会记录为空闲时间，显示为白底黑字。")
-    Help.AddText("y+10 BackGroundffffff c000000 h8 w" bannerWidth " Center","")
-    Help.AddText("y+0 BackGroundffffff c000000 h30 w" bannerWidth " Center","05:13:22").SetFont("s12")
+    Help.AddText("y+10 BackGroundffffff c000000 h8 w" ClockWidth " Center","")
+    Help.AddText("y+0 BackGroundffffff c000000 h30 w" ClockWidth " Center","05:13:22").SetFont("s12")
     Help.AddText("y+10 w280","若超过30秒没有操作，则会记录为离开时间，显示为灰底白字。")
-    Help.AddText("y+10 BackGroundffffff c666666 h8 w" bannerWidth " Center","")
-    Help.AddText("y+0 BackGroundffffff c666666 h30 w" bannerWidth " Center","05:13:22").SetFont("s12")
+    Help.AddText("y+10 BackGroundffffff c666666 h8 w" ClockWidth " Center","")
+    Help.AddText("y+0 BackGroundffffff c666666 h30 w" ClockWidth " Center","05:13:22").SetFont("s12")
     Help.AddText("y+10 w280","提供久坐提醒功能，当用户维持键鼠操作超过30分钟时，程序会显示红色久坐提示（这个功能可以关闭）")
-    Help.AddText("y+10 BackGroundea4135 cffffff h8 w" bannerWidth " Center","")
-    Help.AddText("y+0 BackGroundea4135 cffffff h30 w" bannerWidth " Center","坐太久了").SetFont("s12")
+    Help.AddText("y+10 BackGroundea4135 cffffff h8 w" ClockWidth " Center","")
+    Help.AddText("y+0 BackGroundea4135 cffffff h30 w" ClockWidth " Center","坐太久了").SetFont("s12")
     Help.AddText("xm y+20 w300","作者与联系方式：").SetFont("s10 bold")
     Help.AddText("xp+10 y+10 w280","本程序基于AutoHotkey 2.0.2编写`n由shituniao制作`n时长统计图程序部分由C.Even编写")
     Help.AddLink("y+10 w280", '<a href="https://www.autohotkey.com/">AutoHotkey官网</a>')
