@@ -65,7 +65,7 @@ TraySetIcon(, , 1) ;冻结托盘图标
 ClockGui := Gui()
 ClockGui.Opt("+AlwaysOnTop -Caption +ToolWindow +DPIScale" ) ; +ToolWindow 避免显示任务栏按钮和 alt-tab 菜单项.
 ClockGui.MarginY:=4
-ClockGui.BackColor := Theme["black"] ; 初始白色背景(下面会变成半透明的).
+ClockGui.BackColor := Theme[logger.Theme] ; 初始白色背景(下面会变成半透明的).
 ClockGui.SetFont("s12","Microsoft YaHei UI") 
 ;WinSetTransColor(" 0", ClockGui) ; 半透明:
 WinSetExStyle("+0x20", ClockGui) ;鼠标穿透
@@ -81,7 +81,9 @@ ItemGui.SetFont("s12","Microsoft YaHei UI")
 ItemText :=ItemGui.Add("Text","x0 ym r1 w" ItemWidth " c" Items[logger.CurrentItem]['themeT'] " Center", FormatSeconds(Items[logger.CurrentItem]['time'],False))
 ;WinSetTransColor(" 0", ItemGui) ; 半透明:
 WinSetExStyle("+0x20", ItemGui) ;鼠标穿透
-ItemGui.Show("NoActivate")
+if(logger.ItemShow){
+    ItemGui.Show("NoActivate")
+}
 ItemGui.Move(logger.x-ItemWidth,logger.y,ItemWidth,ClockHeight)
 
 ;提醒浮窗
@@ -92,30 +94,6 @@ TipsGui.BackColor := Theme["white"]
 TipsGui.SetFont("s12","Microsoft YaHei UI") 
 TipsText :=TipsGui.Add("Text","x0 ym r1 w" ItemWidth " c" Theme["whiteT"] " Center")
 WinSetExStyle("+0x20", TipsGui) ;鼠标穿透
-
-;计时器设置窗口
-Config :=Gui()
-Config.Title :="工作计时器"
-Config.MarginX :=12
-Config.MarginY :=15
-Config.SetFont("s10","Microsoft YaHei UI")
-Config.AddText("y+10","目前设置的工作软件：")
-WorkList :=Config.AddEdit("y+10 w300 R9 vWorkList ReadOnly Backgrounddddddd Border",)
-Config.AddText("y+15","添加新的工作软件：")
-ExeWork :=Config.AddListView("y+10 xm r9 vExeWork w300 -Hdr -Multi",["名称"])
-ExeWorkIcon := IL_Create()
-ExeWork.SetImageList(ExeWorkIcon)
-ExeWork.ModifyCol(1, 250)
-ExeWork.OnEvent("ItemSelect",ExeWork_ItemSelect)
-Config.Add("Button", "y+10 w80", "➕添加").OnEvent("Click", ClickADD)
-Config.Add("Button", "x+30 w80", "❔刷新").OnEvent("Click", ClickREFRESH)
-Config.Add("Button", "x+30 w80", "❌清空").OnEvent("Click", ClickCLEAR)
-;Config.Add("Button", "xm w80 w300", "✔️提交").OnEvent("Click", ClickSUBMIT)
-Config.AddText("y+10 xm w300","选择你认为是工作用的软件，点击添加按钮").SetFont("s10 c000000")
-Config.AddText("y+2 xm w300","如果列表中没有要选的软件，尝试先打开这个软件，然后点击刷新按钮，程序会自动检测").SetFont("s9 c444444")
-Caution :=Config.AddText("y+10 vCaution w300")
-Caution.SetFont("s9 c444444")
-SelectItem:=["",1]
 
 ;帮助窗口
 Help:=Gui()
@@ -134,7 +112,6 @@ Loop Items.Length{
     ItemMenu.SetIcon(A_Index "&" ,"ItemIcon.dll",A_Index)
 }
 ItemMenu.Default:=logger.CurrentItem "&" ;用打勾的方式显示当前项目会覆盖掉颜色图标（可恶）所以改成默认项的加粗显示
-
 A_TrayMenu.Insert("1&", "切换项目", ItemMenu)
 A_TrayMenu.Insert("2&", "当前项目归零", MenuHandler)
 A_TrayMenu.Insert("3&")
@@ -142,6 +119,7 @@ A_TrayMenu.Insert("4&", "设置", MenuHandler)
 A_TrayMenu.Insert("5&", "帮助", MenuHandler)
 A_TrayMenu.Insert("6&")
 A_TrayMenu.Default:="4&"
+A_TrayMenu.ClickCount:=1
 
 ;托盘菜单功能函数
 MenuHandler(ItemName, ItemPos, MyMenu) {
@@ -174,129 +152,152 @@ MonitorChoose(ItemName, ItemPos, MyMenu){
 }
 
 ShowConfig(){
-    Config.Show("AutoSize Center")
-    ExeWork.Focus()
-    WorkCACHE:=""
-    for n in WorkExe{
-        WorkCACHE .=StrSplit(StrTitle(n),".exe")[1] "`n"
-    }
-    WorkList.Value:=WorkCACHE
-    ExeWork.Delete()
-    ids := WinGetList() ;获取当前程序列表
-    ;ExeNameList :=[]
-    ENL_p :=[] ;程序列表去重
-    hased :=0
-    for this_id in ids
-    {
-        for this_n in ENL_p{
-            if (WinGetProcessName(this_id) =this_n){
-                hased:=1
-                Break
-            }
-        }
-        if (hased =0){
-            ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
-            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1])
-            ENL_p.Push(StrTitle(WinGetProcessName(this_id)))
-            ;OutputDebug WinGetProcessPath(this_id)  ;测试程序的进程地址（涉及到获取程序Icon图标
-        }
-        hased :=0
-    }
-    Return 
+    Config.Show("Center")
+    Config.Move(,,400,240)
 }
 ;---------------------------用到的各种托盘功能函数👆----------------------------------
-;---------------------------软件设置窗口的功能函数👇----------------------------------
-ClickADD(thisGui, *)
-{
-    hased :=0
-    ;Choosed := thisGui.Gui.Submit(0).SelectItem
-    if(SelectItem[1]!=""){
-        for n in WorkExe{
-            if ((SelectItem[1] ".exe") =n){
-                hased :=1
-                Break
-            }
+;---------------------------软件设置窗口👇----------------------------------
+;计时器设置窗口
+Config :=Gui()
+Config.Title :="TrueWorkTime"
+Config.MarginX :=10
+Config.MarginY :=10
+Config.SetFont("s9","Microsoft YaHei UI")
+ConfigTab:=Config.AddTab3("y+5",["设置","快捷键","工作软件"])
+ConfigTab.Move(,,364,186)
+ConfigTab.OnEvent("Change",Config_SwitchTab)
+ConfigTab.UseTab(1)
+ConfigAutoRun:=Config.AddCheckBox("x25 y45 section vAutoRun Checked" IniRead("Config.ini","setting","auto_run"), "开机自动启动")
+ConfigAutoRun.OnEvent("Click",Config_AutoRun)
+ConfigBreakHide:=Config.AddCheckBox("xs section vBreakHide Checked" IniRead("Config.ini","setting","break_hide"), "非工作时间隐藏计时器")
+ConfigBreakHide.OnEvent("Click",Config_BreakHide)
+ConfigItemShow:=Config.AddCheckBox("xs section vItemShow Checked" IniRead("Config.ini","setting","item_show"), "显示项目累计计时")
+ConfigItemShow.OnEvent("Click",Config_ItemShow)
+config.AddText("xs section","计时器浮窗显示在：")
+ConfigSwitchMonitor:=Config.AddDropDownList("vSwitchMonitor x+3 yp-3.5 Choose" IniRead("Config.ini","setting","monitor"), MonitorList())
+ConfigSwitchMonitor.OnEvent("Change",Config_SwitchMonitor)
+config.AddText("xs section","切换主题：")
+ConfigSwitchTheme:=Config.AddDropDownList("vSwitchTheme x+3 yp-3.5 Choose" CurrentTheme(), ["黑色","白色"])
+ConfigSwitchTheme.OnEvent("Change",Config_SwitchTheme)
+ConfigTab.UseTab(2)
+ConfigHotkey:=Config.AddCheckBox("x25 y45 section vHotkey Checked" IniRead("Config.ini","setting","hotkey"), "全局快捷键")
+ConfigHotkey.OnEvent("Click",Config_Hotkey)
+ConfigHotkeyInfo:=Config.AddGroupBox("xs ys+25", "快捷键说明")
+ConfigHotkeyInfo.Move(,,333,120)
+Config.AddText("xs+10 ys+48","切换至项目1(红):`t`tCtrl+Shift+F1`n切换至项目2(黄):`t`tCtrl+Shift+F2`n切换至项目3(蓝):`t`tCtrl+Shift+F3`n切换至项目4(绿):`t`tCtrl+Shift+F4`n当前项目计时归零:`tCtrl+Shift+F5")
+;ConfigTab.Choose(3)   用这个来单独选择标签页3，用来给第一次使用的用户直接设置工作软件，记得连带设置宽高
+
+;开机自动启动
+Config_AutoRun(GuiCtrlObj, Info){
+    if(GuiCtrlObj.Value){
+        FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"
+    }Else{
+        Try{
+            FileDelete A_Startup "/TrueWorkTime.lnk"
         }
-        if(hased =0){
-            WorkExe.Push(SelectItem[1] ".exe")
-            WorkList.Value.=SelectItem[1] "`n"
-            Caution.Value := "添加成功！"
-        }else{
-            Caution.Value := "这个软件已经添加过了！"
+    }
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","auto_run"
+}
+;切换显示器
+Config_SwitchMonitor(GuiCtrlObj, Info){
+    MonitorGet GuiCtrlObj.Value, &WL, &WT, &WR, &WB
+    logger.x := WR/(A_ScreenDPI/96)-(ClockWidth + 137)
+    logger.y := WT/(A_ScreenDPI/96)
+    ClockGui.Move(logger.x,logger.y)
+    ItemGui.Move(logger.x-ItemWidth,logger.y)
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","monitor"
+}
+MonitorList(){
+    ML:=[]
+    Loop MonitorGetCount(){
+        ML.Push("显示器" A_Index)
+    }
+    Return ML
+}
+
+;切换亮暗主题
+Config_SwitchTheme(GuiCtrlObj, Info){
+    if(GuiCtrlObj.Value==1){
+        logger.Theme:="black"
+        IniWrite "black","Config.ini","setting","theme"
+    }Else{
+        logger.Theme:="white"
+        IniWrite "white","Config.ini","setting","theme"
+    }
+    ClockGui.BackColor := Theme[logger.Theme]
+    ClockText.SetFont("c" Theme[logger.Theme "T"])
+}
+CurrentTheme(){
+    if(logger.Theme=="black"){
+    Return 1
+}Else{
+    Return 2
+}
+}
+
+;摸鱼时自动隐藏
+Config_BreakHide(GuiCtrlObj, Info){
+    logger.BreakHide:=GuiCtrlObj.Value
+    if(!ifwinAct()){
+        if(logger.BreakHide){
+            ClockGui.Move(,,,0)
+            ItemGui.Move(,,,0)
+        }Else{
+            ClockGui.Move(,,,30)
+            ItemGui.Move(,,,30)
         }
-        iniCache:=""
-        for n in WorkExe{
-            iniCache .=n ","
-        }
-        ;写入ini文件
-        iniCache := RTrim(iniCache,",")
-        IniWrite iniCache,"Config.ini","data","workexe"
-    }else{
-        Caution.Value := "你选了啥？"
+    }
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","break_hide"
+}
+
+;全局快捷键开关
+Config_Hotkey(GuiCtrlObj, Info){
+    Suspend !GuiCtrlObj.Value
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","hotkey"
+}
+
+;显示项目累计计时
+Config_ItemShow(GuiCtrlObj, Info){
+    logger.ItemShow:=GuiCtrlObj.Value
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","item_show"
+    if(logger.ItemShow){
+        ItemGui.Show("NoActivate")
+        ItemGui.Move(logger.x-ItemWidth,logger.y,ItemWidth,ClockHeight)
+    }Else{
+        ItemGui.Hide()
     }
 }
 
-ClickREFRESH(thisGui, *){
-    ids := WinGetList() ;获取当前程序列表
-    hased :=0
-    for this_id in ids
-    {
-        Loop ExeWork.GetCount()
+;切换Tab
+Config_SwitchTab(GuiCtrlObj, Info){
+    switch GuiCtrlObj.Value{
+    Case 1:
         {
-            if(ExeWork.GetText(A_Index)=StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1]){
-                hased:=1
-                Break
-            }
+            Config.Move(,,400,240)
+            ConfigTab.Move(,,364,186)
         }
-        if (hased =0){
-            ;ExeNameList.Push(StrSplit(WinGetProcessName(this_id),".exe")[1])
-            ExeWork.Add("Icon" IL_Add(ExeWorkIcon, WinGetProcessPath(this_id)) ,StrSplit(StrTitle(WinGetProcessName(this_id)),".exe")[1])
+    Case 2:
+        {
+            Config.Move(,,400,255)
+            ConfigTab.Move(,,364,200)
+
         }
-        hased :=0
-    }
-    Caution.Value := "软件列表刷新完成！"
-}
-
-ClickCLEAR(thisGui, *){
-    if(WorkExe.Length >0){
-        WorkExe.RemoveAt(1, WorkExe.Length)
-        iniCache:=""
-        for n in WorkExe{
-            iniCache .=n ","
+    Case 3:
+        {
+            Config.Move(,,450,500)
+            ConfigTab.Move(,,416,446)
         }
-        ;写入ini文件
-        iniCache := RTrim(iniCache,",")
-        IniWrite iniCache,"Config.ini","data","workexe"
-        WorkList.Value:=""
-        Caution.Value := "工作软件已清空！"
-    }else{
-        Caution.Value := "已经是空的了啊！"
-    }
-
-}
-
-ExeWork_ItemSelect(EW, Item, Selected){
-    if(Selected){
-        SelectItem[1]:=EW.GetText(Item)
-        SelectItem[2]:=Item
-        ;MsgBox(SelectItem[1] " " SelectItem[2])
     }
 }
 
-;启动时检测是否程序列表为空
-if(WorkExe.Length<=0){
-    ;TrayTip "右键点击任务栏图标进行设置", "尚未设置工作软件"
-    ;Sleep 5000 ; 让它显示 3 秒钟.
-    ;TrayTip
-}
-;---------------------------软件设置窗口的功能函数👆----------------------------------
+;---------------------------软件设置窗口👆----------------------------------
 
 ;-------------------启动时第一次检查-----------------------
 if(WorkExe.Length>0){
-    ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme["blackT"] " Center", "准备") 
+    ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
 }else{
-    ClockGui.BackColor := Theme["black"]
-    ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme["blackT"] " Center", "未设置软件")
+    ClockGui.BackColor := Theme[logger.Theme]
+    ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "未设置软件")
     if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 64")="Yes"){
         ShowConfig()
     } 
@@ -319,7 +320,9 @@ class StateLog {
         this.RunTime :=0 ;总运行时间
         this.State :=1 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
         this.sitTime :=0
-        this.BreakHide:=IniRead("Config.ini","setting","break_hide")
+        this.BreakHide:=IniRead("Config.ini","setting","break_hide") ;摸鱼时是否隐藏浮窗
+        this.ItemShow:= IniRead("Config.ini","setting","item_show") ;是否显示累计计时
+        this.Theme:=IniRead("Config.ini","setting","theme")
         this.check :=ObjBindMethod(this, "StateCheck")
     }
     Start() {
@@ -409,8 +412,8 @@ ChangeGui(stateNew){
         Case 0:
             {
                 ClockText.Value := "未设置软件"
-                ClockGui.BackColor := Theme["black"]
-                ClockText.SetFont("c" Theme["blackT"])
+                ClockGui.BackColor := Theme[logger.Theme]
+                ClockText.SetFont("c" Theme[logger.Theme "T"])
                 ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
                 ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
                 ClockGui.Move(,,,30)
@@ -418,8 +421,8 @@ ChangeGui(stateNew){
             }
         Case 1:
             {
-                ClockGui.BackColor := Theme["black"]
-                ClockText.SetFont("c" Theme["blackT"])
+                ClockGui.BackColor := Theme[logger.Theme]
+                ClockText.SetFont("c" Theme[logger.Theme "T"])
                 ItemGui.BackColor := Items[logger.CurrentItem]['theme']
                 ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
                 ClockGui.Move(,,,30)
@@ -428,7 +431,6 @@ ChangeGui(stateNew){
             }
         Default:
             {
-
                 if(logger.BreakHide){
                     ClockGui.Move(,,,0)
                     ItemGui.Move(,,,0)
@@ -494,32 +496,25 @@ JsonFileReUpdate(){
     FileAppend JSON.Dump(Items),"Itemdata.json"
 }
 ;快捷键部分
-^F1::
+^+F1::
     {
         ChangeItem(1)
     }
-^F2::
+^+F2::
     {
         ChangeItem(2)
     }
-^F3::
+^+F3::
     {
         ChangeItem(3)
     }
-^F4::
+^+F4::
     {
         ChangeItem(4)
     }
-^F5:: 
+^+F5:: 
     {
         ResetItem()
-    }
-^F6::
-    {
-        MonitorGet 1, &WL, &WT, &WR, &WB
-        ;logger.x := WR/(A_ScreenDPI/96)-(ClockWidth + 137)
-        ;logger.y := WT/(A_ScreenDPI/96)
-        ClockGui.Move(10,logger.y)
     }
 
     ; 帮助文本
