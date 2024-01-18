@@ -36,10 +36,10 @@ WorkList:=Array() ;工作程序列表映射
 ConfigWorkList :=Config.AddListView("ys+20 h280 xs vConfigWorkList w190 -Hdr",["名称"])
 ConfigWorkList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
 ConfigWorkList.OnEvent("ItemSelect",WorkList_ItemSelect)
-ConfigAddExe:=Config.AddButton("x+2 yp+120 w25 h30","+")
+ConfigAddExe:=Config.AddButton("x+2 yp+100 w25 h30","+")
 ConfigAddExe.setFont("s12")
 ConfigAddExe.OnEvent("Click",Config_AddExe)
-ConfigRemoveExe:=Config.AddButton("xp yp+50 w25 h30","-")
+ConfigRemoveExe:=Config.AddButton("xp yp+36 w25 h30","-")
 ConfigRemoveExe.setFont("s12")
 ConfigRemoveExe.OnEvent("Click",Config_RemoveExe)
 config.AddText("xs+220 ys section","当前打开的软件：")
