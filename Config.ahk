@@ -30,9 +30,10 @@ ConfigHotkeyInfo.Move(,,333,120)
 Config.AddText("xs+15 ys+48","切换至计时器1(红):`tCtrl+Shift+F1`n切换至计时器2(黄):`tCtrl+Shift+F2`n切换至计时器3(蓝):`tCtrl+Shift+F3`n切换至计时器4(绿):`tCtrl+Shift+F4`n当前计时器归零:`t`tCtrl+Shift+F5")
 ;ConfigTab.Choose(3)   用这个来单独选择标签页3，用来给第一次使用的用户直接设置工作软件，记得连带设置宽高
 ConfigTab.UseTab(3)
-config.AddText("x25 y45 section","工作软件：")
+Config.AddText("y45 x25 section","从右边的列表中选择工作用的软件，点击“+”号添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”")
+config.AddText("xs ys+45 section","工作软件：")
 WorkList:=Array() ;工作程序列表映射
-ConfigWorkList :=Config.AddListView("ys+20 h315 xs vConfigWorkList w190 -Hdr",["名称"])
+ConfigWorkList :=Config.AddListView("ys+20 h280 xs vConfigWorkList w190 -Hdr",["名称"])
 ConfigWorkList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
 ConfigWorkList.OnEvent("ItemSelect",WorkList_ItemSelect)
 ConfigAddExe:=Config.AddButton("x+2 yp+120 w25 h30","+")
@@ -41,15 +42,12 @@ ConfigAddExe.OnEvent("Click",Config_AddExe)
 ConfigRemoveExe:=Config.AddButton("xp yp+50 w25 h30","-")
 ConfigRemoveExe.setFont("s12")
 ConfigRemoveExe.OnEvent("Click",Config_RemoveExe)
-config.AddText("x245 y45 section","当前打开的软件：")
+config.AddText("xs+220 ys section","当前打开的软件：")
 ExeList:=Array() ;当前程序列表映射
-ConfigExeList :=Config.AddListView("section ys+20 h315 xs vConfigExeList w190 -Hdr",["名称"])
+ConfigExeList :=Config.AddListView("section ys+20 h250 xs vConfigExeList w190 -Hdr",["名称"])
 ConfigExeList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
 ConfigExeList.OnEvent("ItemSelect",ExeList_ItemSelect)
-Config.AddText("ys+322 xm+15","提示：`n如果列表中没有要选的软件，可以先打开这个软件`n然后点击刷新按钮，程序会自动检测")
-ConfigRefreshExe:=Config.AddButton("x+20 yp+15 w60 h30","帮助")
-ConfigRefreshExe.OnEvent("Click",Config_HelpExe)
-ConfigRefreshExe:=Config.AddButton("x+5 yp w60 h30","刷新")
+ConfigRefreshExe:=Config.AddButton("xs ys+251 w190 h30","↺刷新")
 ConfigRefreshExe.OnEvent("Click",Config_RefreshExe)
 
 ;开机自动启动
@@ -178,8 +176,8 @@ Config_SwitchTab(GuiCtrlObj, Info){
         }
     Case 3:
         {
-            Config.Move(,,476,500)
-            ConfigTab.Move(,,442,445)
+            Config.Move(,,476,455)
+            ConfigTab.Move(,,442,400)
             ShowWorkList()
             ShowExeList()
         }
@@ -306,11 +304,6 @@ Config_RemoveExe(GuiCtrlObj, Info){
 
 Config_RefreshExe(GuiCtrlObj, Info){
     ShowExeList()
-}
-
-Config_HelpExe(GuiCtrlObj, Info){
-    ToolTip "从右边的列表中选择你工作用的软件，点击“+”号，添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”"
-    SetTimer () => ToolTip(), -5000
 }
 
 ;备忘：打算用一个自定义对象数组来管理程序列表，对象包含属性：程序名，程序地址（存图标）；程序是否被选中。数组序号对应ListView里的序号

@@ -168,13 +168,13 @@ if(WorkExe.Length>0){
     ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "未设置软件")
     if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 64")="Yes"){
         Config.Show("Center")
-        Config.Move(,,476,500)
-        ConfigTab.Move(,,442,445)
+        Config.Move(,,476,455)
+        ConfigTab.Move(,,442,400)
         ConfigTab.Choose(3)
         ShowWorkList()
         ShowExeList()
-        ToolTip("从右边的列表中选择你工作用的软件，点击“+”号，添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”",20,0)
-        SetTimer () => ToolTip(), -8000
+        ;ToolTip("从右边的列表中选择你工作用的软件，点击“+”号，添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”",20,0)
+        ;SetTimer () => ToolTip(), -8000
     } 
 }
 
