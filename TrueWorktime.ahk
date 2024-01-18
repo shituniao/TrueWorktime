@@ -173,8 +173,8 @@ if(WorkExe.Length>0){
         ConfigTab.Choose(3)
         ShowWorkList()
         ShowExeList()
-        ToolTip "从右边的列表中选择你工作用的软件，点击“+”号，添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”"
-        SetTimer () => ToolTip(), -5000
+        ToolTip("从右边的列表中选择你工作用的软件，点击“+”号，添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”",20,0)
+        SetTimer () => ToolTip(), -8000
     } 
 }
 
