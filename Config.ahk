@@ -3,31 +3,34 @@ Config.Title :="TrueWorkTime"
 Config.MarginX :=10
 Config.MarginY :=10
 Config.SetFont("s9","Microsoft YaHei UI")
-ConfigTab:=Config.AddTab3("y+5",["通用设置","累计计时","工作软件"])
-ConfigTab.Move(,,364,166)
+ConfigTab:=Config.AddTab3("y+5",["基础设置","快捷键","工作软件"])
+ConfigTab.Move(,,364,196)
 ConfigTab.OnEvent("Change",Config_SwitchTab)
 ConfigTab.UseTab(1)
 ConfigAutoRun:=Config.AddCheckBox("x25 y45 section vAutoRun Checked" IniRead("Config.ini","setting","auto_run"), "开机自动启动")
 ConfigAutoRun.OnEvent("Click",Config_AutoRun)
-ConfigBreakHide:=Config.AddCheckBox("xs section vBreakHide Checked" IniRead("Config.ini","setting","break_hide"), "非工作时间隐藏计时器")
-ConfigBreakHide.OnEvent("Click",Config_BreakHide)
+ConfigItemShow:=Config.AddCheckBox("xs y+5 section Checked" IniRead("Config.ini","setting","item_show"), "显示累计计时（左）")
+ConfigItemShow.OnEvent("Click",Config_ItemShow)
+ConfigClockShow:=Config.AddCheckBox("x+5 yp Checked" IniRead("Config.ini","setting","clock_show"), "显示当前计时（右）")
+ConfigClockShow.OnEvent("Click",Config_ClockShow)
+config.AddText("xs section","非工作时间：")
+ConfigBreakSwitch:=Config.AddDropDownList("x+3 yp-3.5 w170 Choose" IniRead("Config.ini","setting","break_switch"),["暂停计时器","隐藏计时器"])
+ConfigBreakSwitch.OnEvent("Change",Config_BreakSwitch)
 config.AddText("xs section","计时器浮窗显示在：")
 ConfigSwitchMonitor:=Config.AddDropDownList("vSwitchMonitor x+3 yp-3.5 Choose" IniRead("Config.ini","setting","monitor"), MonitorList())
 ConfigSwitchMonitor.OnEvent("Change",Config_SwitchMonitor)
 config.AddText("xs section","切换主题：")
-ConfigSwitchTheme:=Config.AddDropDownList("vSwitchTheme x+3 yp-3.5 Choose" CurrentTheme(), ["黑色","白色"])
+ConfigSwitchTheme:=Config.AddDropDownList("vSwitchTheme x+3 yp-3.5 w184 Choose" CurrentTheme(), ["黑色","白色"])
 ConfigSwitchTheme.OnEvent("Change",Config_SwitchTheme)
 ConfigTab.UseTab(2)
-ConfigItemShow:=Config.AddCheckBox("x25 y45 section vItemShow Checked" IniRead("Config.ini","setting","item_show"), "显示累计计时")
-ConfigItemShow.OnEvent("Click",Config_ItemShow)
-ConfigHotkey:=Config.AddCheckBox("xs section vHotkey Checked" IniRead("Config.ini","setting","hotkey"), "全局快捷键")
+ConfigHotkey:=Config.AddCheckBox("x25 y45 section vHotkey Checked" IniRead("Config.ini","setting","hotkey"), "全局快捷键")
 ConfigHotkey.OnEvent("Click",Config_Hotkey)
 ConfigHotkeyInfo:=Config.AddGroupBox("xs ys+25", "快捷键说明")
 ConfigHotkeyInfo.Move(,,333,120)
 Config.AddText("xs+15 ys+48","切换至计时器1(红):`tCtrl+Shift+F1`n切换至计时器2(黄):`tCtrl+Shift+F2`n切换至计时器3(蓝):`tCtrl+Shift+F3`n切换至计时器4(绿):`tCtrl+Shift+F4`n当前计时器归零:`t`tCtrl+Shift+F5")
 ;ConfigTab.Choose(3)   用这个来单独选择标签页3，用来给第一次使用的用户直接设置工作软件，记得连带设置宽高
 ConfigTab.UseTab(3)
-config.AddText("x25 y45 section","已设置的工作软件：")
+config.AddText("x25 y45 section","工作软件：")
 WorkList:=Array() ;工作程序列表映射
 ConfigWorkList :=Config.AddListView("ys+20 h315 xs vConfigWorkList w190 -Hdr",["名称"])
 ConfigWorkList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
@@ -38,7 +41,7 @@ ConfigAddExe.OnEvent("Click",Config_AddExe)
 ConfigRemoveExe:=Config.AddButton("xp yp+50 w25 h30","-")
 ConfigRemoveExe.setFont("s12")
 ConfigRemoveExe.OnEvent("Click",Config_RemoveExe)
-config.AddText("x245 y45 section","添加新的工作软件：")
+config.AddText("x245 y45 section","当前打开的软件：")
 ExeList:=Array() ;当前程序列表映射
 ConfigExeList :=Config.AddListView("section ys+20 h315 xs vConfigExeList w190 -Hdr",["名称"])
 ConfigExeList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
@@ -60,6 +63,48 @@ Config_AutoRun(GuiCtrlObj, Info){
     }
     IniWrite GuiCtrlObj.Value,"Config.ini","setting","auto_run"
 }
+
+;显示本次计时器
+Config_ClockShow(GuiCtrlObj, Info){
+    logger.ClockShow:=GuiCtrlObj.Value
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","clock_show"
+    if(GuiCtrlObj.Value){
+        ClockGui.Show("NoActivate")
+        ClockGui.Move(logger.x,logger.y,ClockWidth,ClockHeight)
+    }Else{
+        ClockGui.Hide()
+    }
+}
+
+;显示项目累计计时
+Config_ItemShow(GuiCtrlObj, Info){
+    logger.ItemShow:=GuiCtrlObj.Value
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","item_show"
+    if(logger.ItemShow){
+        ItemGui.Show("NoActivate")
+        ItemGui.Move(logger.x-ItemWidth,logger.y,ItemWidth,ClockHeight)
+    }Else{
+        ItemGui.Hide()
+    }
+}
+;摸鱼时显示器状态
+Config_BreakSwitch(GuiCtrlObj, Info){
+    logger.BreakSwitch:=GuiCtrlObj.Value
+    IniWrite GuiCtrlObj.Value,"Config.ini","setting","break_switch"
+    if(!ifwinAct()){
+        if(logger.BreakSwitch==2){
+            ClockGui.Move(,,,0)
+            ItemGui.Move(,,,0)
+        }Else{
+            ClockGui.Move(,,,30)
+            ItemGui.Move(,,,30)
+            ClockText.SetFont("c" Theme["gray"])
+            ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
+            ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
+        }
+    }
+}
+
 ;切换显示器
 Config_SwitchMonitor(GuiCtrlObj, Info){
     MonitorGet GuiCtrlObj.Value, &WL, &WT, &WR, &WB
@@ -87,7 +132,6 @@ Config_SwitchTheme(GuiCtrlObj, Info){
         IniWrite "white","Config.ini","setting","theme"
     }
     ClockGui.BackColor := Theme[logger.Theme]
-    ClockText.SetFont("c" Theme[logger.Theme "T"])
 }
 CurrentTheme(){
     if(logger.Theme=="black"){
@@ -118,30 +162,18 @@ Config_Hotkey(GuiCtrlObj, Info){
     IniWrite GuiCtrlObj.Value,"Config.ini","setting","hotkey"
 }
 
-;显示项目累计计时
-Config_ItemShow(GuiCtrlObj, Info){
-    logger.ItemShow:=GuiCtrlObj.Value
-    IniWrite GuiCtrlObj.Value,"Config.ini","setting","item_show"
-    if(logger.ItemShow){
-        ItemGui.Show("NoActivate")
-        ItemGui.Move(logger.x-ItemWidth,logger.y,ItemWidth,ClockHeight)
-    }Else{
-        ItemGui.Hide()
-    }
-}
-
 ;切换Tab
 Config_SwitchTab(GuiCtrlObj, Info){
     switch GuiCtrlObj.Value{
     Case 1:
         {
-            Config.Move(,,400,220)
-            ConfigTab.Move(,,364,166)
+            Config.Move(,,400,250)
+            ConfigTab.Move(,,364,196)
         }
     Case 2:
         {
-            Config.Move(,,400,280)
-            ConfigTab.Move(,,364,225)
+            Config.Move(,,400,260)
+            ConfigTab.Move(,,364,205)
 
         }
     Case 3:
@@ -169,10 +201,13 @@ ShowExeList(){
         ;去重
         hased :=0
         for this_n in ExeList{
-            if (WinGetProcessName(this_id) ==this_n.Name){
-                hased:=1
-                Break
+            Try{
+                if (WinGetProcessName(this_id) ==this_n.Name){
+                    hased:=1
+                    Break
+                }
             }
+
         }
         if (hased ==0){
             ExeList.Push(Exe(WinGetProcessName(this_id),WinGetProcessPath(this_id))) ;;存入当前程序列表映射

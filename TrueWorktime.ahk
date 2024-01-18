@@ -1,10 +1,5 @@
 Version :="v1.1.0"
 FileEncoding "UTF-8"
-DirCreate A_MyDocuments "\TrueWorkTime"
-SetWorkingDir A_MyDocuments "\TrueWorkTime"
-Try{
-    FileCopy A_ScriptFullPath,A_MyDocuments "\TrueWorkTime",0
-}
 
 ;引入外部JSON库，来自https://github.com/G33kDude/cJson.ahk
 FileInstall "JSON.ahk", "JSON.ahk" ,1 ;把JSON.ahk写入exe文件里
@@ -43,7 +38,7 @@ Theme["black"]:="000000"
 Theme["blackT"]:="ffffff"
 Theme["white"]:="ffffff"
 Theme["whiteT"]:="000000"
-Theme["gray"]:="919191"
+Theme["gray"]:="999999"
 Theme["grayT"]:="1f1f1f"
 
 ;JSON读取
@@ -159,7 +154,7 @@ MonitorChoose(ItemName, ItemPos, MyMenu){
 
 ShowConfig(){
     Config.Show("Center")
-    Config.Move(,,400,220)
+    Config.Move(,,400,250)
     ConfigTab.Choose(1)
 }
 ;---------------------------用到的各种托盘功能函数👆----------------------------------
@@ -200,7 +195,8 @@ class StateLog {
         this.RunTime :=0 ;总运行时间
         this.State :=1 ;计时器状态，1-工作中，2-摸鱼中，3-离开中， 0-未设置工作软件   ,4-久坐提醒
         this.sitTime :=0
-        this.BreakHide:=IniRead("Config.ini","setting","break_hide") ;摸鱼时是否隐藏浮窗
+        this.BreakSwitch:=IniRead("Config.ini","setting","break_switch") ;摸鱼时浮窗状态
+        this.ClockShow:=IniRead("Config.ini","setting","clock_show") ;是否显示本次计时
         this.ItemShow:= IniRead("Config.ini","setting","item_show") ;是否显示累计计时
         this.Theme:=IniRead("Config.ini","setting","theme")
         this.check :=ObjBindMethod(this, "StateCheck")
@@ -283,8 +279,10 @@ AlwaysOnTop(){
 ;修改悬浮窗
 ChangeGui(stateNew){
     if(stateNew!=0){
-        ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
-        ClockText.Value :=FormatSeconds(logger.WorkTime)
+        if(stateNew==1){
+            ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
+            ClockText.Value :=FormatSeconds(logger.WorkTime)
+        }
     }
     if(stateNew!=logger.State){
         logger.State:=stateNew
@@ -311,17 +309,16 @@ ChangeGui(stateNew){
             }
         Default:
             {
-                if(logger.BreakHide){
+                if(logger.BreakSwitch==2){
                     ClockGui.Move(,,,0)
                     ItemGui.Move(,,,0)
                 }Else{
-                    ClockGui.BackColor := Theme["gray"]
-                    ClockText.SetFont("c" Theme["grayT"])
+                    ClockGui.Move(,,,30)
+                    ItemGui.Move(,,,30)
+                    ClockText.SetFont("c" Theme["gray"])
                     ItemGui.BackColor := Items[logger.CurrentItem]['themeB']
                     ItemText.SetFont("c" Items[logger.CurrentItem]['themeT'])
-
                 }
-                ;ClockText.Value :=FormatSeconds(logger.BreakTime)
             }
         }
         ;OutputDebug "状态改变为" stateNew "，刷新Gui"
