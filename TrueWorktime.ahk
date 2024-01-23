@@ -354,6 +354,9 @@ ResetItem(){
     ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
     TipsOn("-归零-",-500,Items[logger.CurrentItem]['theme'],Items[logger.CurrentItem]['themeT'])
     OutputDebug "项目" logger.CurrentItem "已归零"
+    Loop Items.Length{
+        ItemMenu.Rename(A_Index "&",FormatSeconds(Items[A_Index]["time"],False))
+    }
 }
 
 TipsOn(text,life,color,colorT){
