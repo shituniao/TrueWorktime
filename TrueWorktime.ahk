@@ -282,6 +282,9 @@ ChangeGui(stateNew){
         if(stateNew==1){
             ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
             ClockText.Value :=FormatSeconds(logger.WorkTime)
+            Loop Items.Length{
+                ItemMenu.Rename(A_Index "&",FormatSeconds(Items[A_Index]["time"],False))
+            }
         }
     }
     if(stateNew!=logger.State){
