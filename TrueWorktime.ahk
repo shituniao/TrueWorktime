@@ -8,6 +8,9 @@ FileInstall "ItemdataDEF.json", "ItemdataDEF.json" ,1 ;把保底JSON写入exe文
 FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
 FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
 ;FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"   创建开机启动
+if(!FileExist("log.csv")){
+    FileAppend "start,end,worktime","log.csv"
+}
 
 #Include JSON.ahk 
 
@@ -158,6 +161,9 @@ ShowConfig(){
     Config.Move(,,400,250)
     ConfigTab.Choose(1)
 }
+;---------------------------软件设置窗口👇----------------------------------
+#Include Config.ahk 
+
 ;-------------------启动时第一次检查👇-----------------------
 ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
 Try{
@@ -196,9 +202,6 @@ if(WorkExe.Length>0){
         ;SetTimer () => ToolTip(), -8000
     } 
 }
-
-;---------------------------软件设置窗口👇----------------------------------
-#Include Config.ahk 
 
 ;✅✅✅✅✅✅启动计时器✅✅✅✅✅✅
 logger.Start 
@@ -402,12 +405,9 @@ LastData(){
 
 ;csv文件写入
 csvWrite(){
-    if(FileExist("log.csv")){
-        FileAppend "`n" IniRead("Config.ini","data","last_start") "," IniRead("Config.ini","data","last_end") "," IniRead("Config.ini","data","last_worktime"), "log.csv"
-        IniWrite A_Now,"Config.ini","data","last_start"
-    }Else{
-        FileAppend "start,end,worktime","log.csv"
-    }
+    FileAppend "`n" IniRead("Config.ini","data","last_start") "," IniRead("Config.ini","data","last_end") "," IniRead("Config.ini","data","last_worktime"), "log.csv"
+    IniWrite A_Now,"Config.ini","data","last_start"
+
 }
 
 ;JSON文件更新
