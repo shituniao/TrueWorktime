@@ -3,9 +3,10 @@ Config.Title :="TrueWorkTime"
 Config.MarginX :=10
 Config.MarginY :=10
 Config.SetFont("s9","Microsoft YaHei UI")
-ConfigTab:=Config.AddTab3("y+5",["基础设置","快捷键","工作软件"])
+ConfigTab:=Config.AddTab3("y+5",["基础设置","快捷键","工作软件","计时记录"])
 ConfigTab.Move(,,364,196)
 ConfigTab.OnEvent("Change",Config_SwitchTab)
+;基础设置
 ConfigTab.UseTab(1)
 ConfigAutoRun:=Config.AddCheckBox("x25 y45 section vAutoRun Checked" IniRead("Config.ini","setting","auto_run"), "开机自动启动")
 ConfigAutoRun.OnEvent("Click",Config_AutoRun)
@@ -22,6 +23,7 @@ ConfigSwitchMonitor.OnEvent("Change",Config_SwitchMonitor)
 config.AddText("xs section","切换主题：")
 ConfigSwitchTheme:=Config.AddDropDownList("vSwitchTheme x+3 yp-3.5 w184 Choose" CurrentTheme(), ["黑色","白色"])
 ConfigSwitchTheme.OnEvent("Change",Config_SwitchTheme)
+;快捷键
 ConfigTab.UseTab(2)
 ConfigHotkey:=Config.AddCheckBox("x25 y45 section vHotkey Checked" IniRead("Config.ini","setting","hotkey"), "全局快捷键")
 ConfigHotkey.OnEvent("Click",Config_Hotkey)
@@ -29,6 +31,7 @@ ConfigHotkeyInfo:=Config.AddGroupBox("xs ys+25", "快捷键说明")
 ConfigHotkeyInfo.Move(,,333,120)
 Config.AddText("xs+15 ys+48","切换至计时器1(红):`tCtrl+Shift+F1`n切换至计时器2(黄):`tCtrl+Shift+F2`n切换至计时器3(蓝):`tCtrl+Shift+F3`n切换至计时器4(绿):`tCtrl+Shift+F4`n当前计时器归零:`t`tCtrl+Shift+F5")
 ;ConfigTab.Choose(3)   用这个来单独选择标签页3，用来给第一次使用的用户直接设置工作软件，记得连带设置宽高
+;工作软件
 ConfigTab.UseTab(3)
 Config.AddText("y45 x25 section","从右边的列表中选择工作用的软件，点击“+”号添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”")
 config.AddText("xs ys+45 section","工作软件：")
@@ -49,7 +52,34 @@ ConfigExeList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
 ConfigExeList.OnEvent("ItemSelect",ExeList_ItemSelect)
 ConfigRefreshExe:=Config.AddButton("xs ys+251 w190 h30","↺刷新")
 ConfigRefreshExe.OnEvent("Click",Config_RefreshExe)
+;计时记录
+ConfigTab.UseTab(4)
+ConfigLogList :=Config.AddListView("y35 x15 h395 w430 NoSortHdr",["开始时间","工作时长","总时长","工作时长占比"])
+ConfigLogList.ModifyCol(1, "130 Center")
+ConfigLogList.ModifyCol(2, "100 Center")
+ConfigLogList.ModifyCol(3, "100 Center")
+ConfigLogList.ModifyCol(4, "AutoHdr Center")
+Loop read,"log.csv"{
+    result:=[]
+    if(A_Index>1){
+        Loop Parse,A_LoopReadLine,"CSV"{
+            switch A_Index{
+            case 1:
+                result.Push(A_LoopField)
 
+            case 2:
+                result.Push(A_LoopField)
+
+            case 3:
+                result.Push(A_LoopField)
+            }
+        }
+        ;OutputDebug(A_Index "----" result[1] "," result[3] "," DateDiff(result[2],result[1],"seconds") "," Round(result[3]/DateDiff(result[2],result[1],"seconds")*100))
+        ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日HH:mm"),FormatSeconds(result[3]),FormatSeconds(DateDiff(result[2],result[1],"seconds")),Round(result[3]/DateDiff(result[2],result[1],"seconds")*100) "%")
+    }
+}
+
+;--------------用到的函数---------------
 ;开机自动启动
 Config_AutoRun(GuiCtrlObj, Info){
     if(GuiCtrlObj.Value){
@@ -181,7 +211,14 @@ Config_SwitchTab(GuiCtrlObj, Info){
             ShowWorkList()
             ShowExeList()
         }
+    Case 4:
+        {
+            Config.Move(,,476,485)
+            ConfigTab.Move(,,442,430)
+
+        }
     }
+
 }
 
 ;显示当前程序列表
@@ -315,4 +352,3 @@ class Exe {
         this.Choose:=0
     }
 }
-

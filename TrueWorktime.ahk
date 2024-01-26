@@ -8,6 +8,7 @@ FileInstall "ItemdataDEF.json", "ItemdataDEF.json" ,1 ;把保底JSON写入exe文
 FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
 FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
 ;FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"   创建开机启动
+
 #Include JSON.ahk 
 
 ClockWidth :=90
@@ -157,28 +158,27 @@ ShowConfig(){
     Config.Move(,,400,250)
     ConfigTab.Choose(1)
 }
-;---------------------------用到的各种托盘功能函数👆----------------------------------
-#Include Config.ahk 
-;---------------------------软件设置窗口👆----------------------------------
 ;-------------------启动时第一次检查👇-----------------------
 ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
 Try{
-    if(A_TickCount-IniRead("Config.ini","data","last_log")<14400000){
+    if(A_TickCount-IniRead("Config.ini","data","last_log")<14400000){ ;14400000
         if(MsgBox("检测到最近（4小时内）有时间记录，是否延用？","工作计时器","4 64")="Yes"){
             logger.WorkTime:=IniRead("Config.ini","data","last_worktime")
             logger.BreakTime:=IniRead("Config.ini","data","last_breaktime")
             logger.LeaveTime:=IniRead("Config.ini","data","last_leavetime")
+        }Else{
+            csvWrite()
         }
+    }else{
+        csvWrite()
     }
-}Catch{ ;用来帮助更新用户防止报错
+}Catch{ ;用来帮助老版本用户防止报错
     IniWrite 0,"Config.ini","data","last_log"
     IniWrite 0,"Config.ini","data","last_worktime"
     IniWrite 0,"Config.ini","data","last_breaktime"
     IniWrite 0,"Config.ini","data","last_leavetime"
-    IniWrite 0,"ConfigDEF.ini","data","last_log"
-    IniWrite 0,"ConfigDEF.ini","data","last_worktime"
-    IniWrite 0,"ConfigDEF.ini","data","last_breaktime"
-    IniWrite 0,"ConfigDEF.ini","data","last_leavetime"
+    IniWrite A_Now,"Config.ini","data","last_start"
+    IniWrite 0,"Config.ini","data","last_end"
 }
 if(WorkExe.Length>0){
     ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
@@ -196,6 +196,9 @@ if(WorkExe.Length>0){
         ;SetTimer () => ToolTip(), -8000
     } 
 }
+
+;---------------------------软件设置窗口👇----------------------------------
+#Include Config.ahk 
 
 ;✅✅✅✅✅✅启动计时器✅✅✅✅✅✅
 logger.Start 
@@ -394,6 +397,17 @@ LastData(){
     IniWrite logger.WorkTime,"Config.ini","data","last_worktime"
     IniWrite logger.BreakTime,"Config.ini","data","last_breaktime"
     IniWrite logger.LeaveTime,"Config.ini","data","last_leavetime"
+    IniWrite A_Now,"Config.ini","data","last_end"
+}
+
+;csv文件写入
+csvWrite(){
+    if(FileExist("log.csv")){
+        FileAppend "`n" IniRead("Config.ini","data","last_start") "," IniRead("Config.ini","data","last_end") "," IniRead("Config.ini","data","last_worktime"), "log.csv"
+        IniWrite A_Now,"Config.ini","data","last_start"
+    }Else{
+        FileAppend "start,end,worktime","log.csv"
+    }
 }
 
 ;JSON文件更新
