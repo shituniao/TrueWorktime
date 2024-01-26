@@ -72,10 +72,13 @@ Loop read,"log.csv"{
 
             case 3:
                 result.Push(A_LoopField)
+            case 4:
+                result.Push(A_LoopField)
             }
+
         }
         ;OutputDebug(A_Index "----" result[1] "," result[3] "," DateDiff(result[2],result[1],"seconds") "," Round(result[3]/DateDiff(result[2],result[1],"seconds")*100))
-        ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日HH:mm"),FormatSeconds(result[3]),FormatSeconds(DateDiff(result[2],result[1],"seconds")),Round(result[3]/DateDiff(result[2],result[1],"seconds")*100) "%")
+        ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日HH:mm"),result[2],result[3],result[4] "%")
     }
 }
 

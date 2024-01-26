@@ -9,7 +9,7 @@ FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
 FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
 ;FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"   创建开机启动
 if(!FileExist("log.csv")){
-    FileAppend "start,end,worktime","log.csv"
+    FileAppend "start,worktime,alltime,ratio","log.csv"
 }
 
 #Include JSON.ahk 
@@ -161,19 +161,16 @@ ShowConfig(){
     Config.Move(,,400,250)
     ConfigTab.Choose(1)
 }
-;---------------------------软件设置窗口👇----------------------------------
-#Include Config.ahk 
-
 ;-------------------启动时第一次检查👇-----------------------
 ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
 Try{
     if(A_TickCount-IniRead("Config.ini","data","last_log")<14400000){ ;14400000
-        if(MsgBox("检测到最近（4小时内）有时间记录，是否延用？","工作计时器","4 64")="Yes"){
+        if(MsgBox("检测到最近（4小时内）有时间记录，是否延用？","工作计时器","4 64")=="Yes"){
             logger.WorkTime:=IniRead("Config.ini","data","last_worktime")
             logger.BreakTime:=IniRead("Config.ini","data","last_breaktime")
             logger.LeaveTime:=IniRead("Config.ini","data","last_leavetime")
-        }Else{
-            csvWrite()
+        }else{
+            csvWrite() 
         }
     }else{
         csvWrite()
@@ -203,7 +200,10 @@ if(WorkExe.Length>0){
     } 
 }
 
-;✅✅✅✅✅✅启动计时器✅✅✅✅✅✅
+;---------------------------软件设置窗口👇----------------------------------
+#Include Config.ahk 
+
+;✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅启动计时器✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 logger.Start 
 
 ;⭐⭐⭐⭐⭐⭐计时器类（核心程序⭐⭐⭐⭐⭐⭐
@@ -405,9 +405,16 @@ LastData(){
 
 ;csv文件写入
 csvWrite(){
-    FileAppend "`n" IniRead("Config.ini","data","last_start") "," IniRead("Config.ini","data","last_end") "," IniRead("Config.ini","data","last_worktime"), "log.csv"
-    IniWrite A_Now,"Config.ini","data","last_start"
 
+    start:=IniRead("Config.ini","data","last_start")
+    worktime:=IniRead("Config.ini","data","last_worktime")
+    alltime:=DateDiff(IniRead("Config.ini","data","last_end"),IniRead("Config.ini","data","last_start"),"seconds")
+    ratio:=Round(100*worktime/alltime)
+    worktime:=FormatSeconds(worktime)
+    alltime:=FormatSeconds(alltime)
+
+    FileAppend "`n" start "," worktime "," alltime "," ratio , "log.csv"
+    IniWrite A_Now,"Config.ini","data","last_start"
 }
 
 ;JSON文件更新
