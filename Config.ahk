@@ -78,7 +78,7 @@ Loop read,"log.csv"{
 
         }
         ;OutputDebug(A_Index "----" result[1] "," result[3] "," DateDiff(result[2],result[1],"seconds") "," Round(result[3]/DateDiff(result[2],result[1],"seconds")*100))
-        ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日dddHH:mm"),result[2],result[3],result[4] "%")
+        ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日ddd HH:mm"),result[2],result[3],result[4] "%")
     }
 }
 
