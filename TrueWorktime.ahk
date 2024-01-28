@@ -164,8 +164,8 @@ ShowConfig(){
 ;-------------------启动时第一次检查👇-----------------------
 ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
 Try{
-    if(A_TickCount-IniRead("Config.ini","data","last_log")<14400000){ ;14400000
-        if(MsgBox("检测到最近（4小时内）有时间记录，是否延用？","工作计时器","4 64")=="Yes"){
+    if(A_TickCount-IniRead("Config.ini","data","last_log")<21600000){ ;21600000
+        if(MsgBox("检测到近期（6小时内）有时间记录，是否延用？","工作计时器","4 64")=="Yes"){
             logger.WorkTime:=IniRead("Config.ini","data","last_worktime")
             logger.BreakTime:=IniRead("Config.ini","data","last_breaktime")
             logger.LeaveTime:=IniRead("Config.ini","data","last_leavetime")
