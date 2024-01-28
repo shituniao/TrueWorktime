@@ -4,6 +4,7 @@ FileEncoding "UTF-8"
 ;引入外部JSON库，来自https://github.com/G33kDude/cJson.ahk
 FileInstall "JSON.ahk", "JSON.ahk" ,1 ;把JSON.ahk写入exe文件里
 FileInstall "Config.ahk", "Config.ahk" ,1 ;把Config.ahk写入exe文件里
+FileInstall "Archive.ahk", "Archive.ahk" ,1 ;把Archive.ahk写入exe文件里
 FileInstall "ItemdataDEF.json", "ItemdataDEF.json" ,1 ;把保底JSON写入exe文件里
 FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
 FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
@@ -11,8 +12,11 @@ FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
 if(!FileExist("log.csv")){
     FileAppend "start,worktime,alltime,ratio","log.csv"
 }
+if(!FileExist("archive.csv")){
+    FileAppend "name,start,end,time","archive.csv"
+}
 
-#Include JSON.ahk 
+#Include JSON.ahk
 
 ClockWidth :=90
 ClockHeight :=30
@@ -63,6 +67,11 @@ Try{
 }
 
 Items:=JSON.Load(ItemJson)
+;用来修复旧版本里日期带符号的问题
+for n in Items{
+    ;OutputDebug(RegExReplace(n['start'],"\D"))
+    n["start"]:=RegExReplace(n['start'],"\D")
+}
 
 logger := StateLog() ;定义计时器对象
 TraySetIcon(, , 1) ;冻结托盘图标
@@ -114,17 +123,18 @@ A_TrayMenu.Delete("&Suspend Hotkeys")
 A_TrayMenu.Delete("&Pause Script")
 ItemMenu :=Menu()
 Loop Items.Length{
-    ItemMenu.Add(A_Index "：" FormatSeconds(Items[A_Index]["time"],False),ItemSwitch) ;发现项目名字不能一样（Why？？？）
+    ItemMenu.Add(A_Index "：" FormatSeconds(Items[A_Index]["time"],False),ItemSwitch) 
     ItemMenu.SetIcon(A_Index "&" ,"ItemIcon.dll",A_Index)
+    ItemMenu.Rename(A_Index "&",FormatSeconds(Items[A_Index]["time"],False))
 }
 ItemMenu.Default:=logger.CurrentItem "&" ;用打勾的方式显示当前项目会覆盖掉颜色图标（可恶）所以改成默认项的加粗显示
 A_TrayMenu.Insert("1&", "切换项目", ItemMenu)
-A_TrayMenu.Insert("2&", "当前项目归零", MenuHandler)
-A_TrayMenu.Insert("3&")
-A_TrayMenu.Insert("4&", "设置", MenuHandler)
-A_TrayMenu.Insert("5&", "帮助", MenuHandler)
+A_TrayMenu.Insert("2&", "重置", MenuHandler)
+A_TrayMenu.Insert("3&", "归档", MenuHandler)
+A_TrayMenu.Insert("4&")
+A_TrayMenu.Insert("5&", "设置", MenuHandler)
 A_TrayMenu.Insert("6&")
-A_TrayMenu.Default:="4&"
+A_TrayMenu.Default:="5&"
 A_TrayMenu.ClickCount:=1
 
 ;---------------------用到的各种托盘功能函数👇--------------------------------------
@@ -134,13 +144,13 @@ MenuHandler(ItemName, ItemPos, MyMenu) {
         {
             ResetItem()
         }
-    Case 4:
+    Case 3:
         {
-            ShowConfig()
+            ShowArchive()
         }
     Case 5:
         {
-            Help.Show("AutoSize Center")
+            ShowConfig()
         }
     }
 }
@@ -160,6 +170,30 @@ ShowConfig(){
     Config.Show("Center")
     Config.Move(,,400,250)
     ConfigTab.Choose(1)
+}
+ShowArchive(){
+    Archive.Show("Center")
+    Archive.Move(,,425,175)
+    m:=[]
+    loop Items.Length{
+        switch A_Index{
+        Case 1:
+            n:="1(红色)-"
+        Case 2:
+            n:="2(黄色)-"
+        Case 3:
+            n:="3(蓝色)-"
+        Case 4:
+            n:="4(绿色)-"
+        }
+        if(A_Index==logger.CurrentItem){
+            n:=n "-当前"
+        }
+        m.Push(n)
+    }
+    ArchiveChooseItem.Delete()
+    ArchiveChooseItem.Add(m)
+    ArchiveChooseItem.Choose(Number(logger.CurrentItem))
 }
 ;-------------------启动时第一次检查👇-----------------------
 ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
@@ -200,8 +234,9 @@ if(WorkExe.Length>0){
     } 
 }
 
-;---------------------------软件设置窗口👇----------------------------------
+;---------------------------加载软件窗口👇----------------------------------
 #Include Config.ahk 
+#Include Archive.ahk
 
 ;✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅启动计时器✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 logger.Start 
@@ -246,7 +281,7 @@ class StateLog {
                     this.sitTime++
                     if(Items[logger.CurrentItem]['time']==0){
                         OutputDebug "项目" this.CurrentItem "开始计时！开始时间已录入：" FormatTime(,"yyyy-MM-dd HH:mm:ss")
-                        Items[logger.CurrentItem]['start']:= FormatTime(,"yyyy-MM-dd HH:mm:ss") ;检查项目计时是否为零
+                        Items[logger.CurrentItem]['start']:= A_Now ;检查项目计时是否为零
                     }
                     Items[this.CurrentItem]['time']++
                     ChangeGui(1) ;更新悬浮窗
@@ -378,7 +413,7 @@ ResetItem(){
     Items[logger.CurrentItem]['time']:=0
     JsonFileReUpdate()
     ItemText.Value := FormatSeconds(Items[logger.CurrentItem]['time'],False)
-    TipsOn("-归零-",-500,Items[logger.CurrentItem]['theme'],Items[logger.CurrentItem]['themeT'])
+    TipsOn("-重置-",-500,Items[logger.CurrentItem]['theme'],Items[logger.CurrentItem]['themeT'])
     OutputDebug "项目" logger.CurrentItem "已归零"
     Loop Items.Length{
         ItemMenu.Rename(A_Index "&",FormatSeconds(Items[A_Index]["time"],False))

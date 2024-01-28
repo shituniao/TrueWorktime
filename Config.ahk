@@ -3,7 +3,7 @@ Config.Title :="TrueWorkTime"
 Config.MarginX :=10
 Config.MarginY :=10
 Config.SetFont("s9","Microsoft YaHei UI")
-ConfigTab:=Config.AddTab3("y+5",["基础设置","快捷键","工作软件","计时记录"])
+ConfigTab:=Config.AddTab3("y+5",["基础设置","快捷键","工作软件","计时记录","归档记录"])
 ConfigTab.Move(,,364,196)
 ConfigTab.OnEvent("Change",Config_SwitchTab)
 ;基础设置
@@ -59,6 +59,17 @@ ConfigLogList.ModifyCol(1, "130 Center")
 ConfigLogList.ModifyCol(2, "100 Center")
 ConfigLogList.ModifyCol(3, "100 Center")
 ConfigLogList.ModifyCol(4, "AutoHdr Center")
+;归档记录
+ConfigTab.UseTab(5)
+ConfigArchiveBT:=Config.AddButton("y35 x15 w430","归档项目")
+ConfigArchiveBT.OnEvent("Click",Config_Archive)
+ConfigArchive :=Config.AddListView("y+5 x15 h362 w430 NoSortHdr",["名称","开始日期","归档日期","耗时"])
+ConfigArchive.ModifyCol(1, "200 Center")
+ConfigArchive.ModifyCol(2, "65 Center")
+ConfigArchive.ModifyCol(3, "65 Center")
+ConfigArchive.ModifyCol(4, "AutoHdr Center")
+ArchiveRefresh()
+
 Loop read,"log.csv"{
     result:=[]
     if(A_Index>1){
@@ -66,10 +77,8 @@ Loop read,"log.csv"{
             switch A_Index{
             case 1:
                 result.Push(A_LoopField)
-
             case 2:
                 result.Push(A_LoopField)
-
             case 3:
                 result.Push(A_LoopField)
             case 4:
@@ -77,7 +86,6 @@ Loop read,"log.csv"{
             }
 
         }
-        ;OutputDebug(A_Index "----" result[1] "," result[3] "," DateDiff(result[2],result[1],"seconds") "," Round(result[3]/DateDiff(result[2],result[1],"seconds")*100))
         ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日ddd HH:mm"),result[2],result[3],result[4] "%")
     }
 }
@@ -220,6 +228,12 @@ Config_SwitchTab(GuiCtrlObj, Info){
             ConfigTab.Move(,,442,430)
 
         }
+    Case 5:
+        {
+            Config.Move(,,476,485)
+            ConfigTab.Move(,,442,430)
+            ArchiveRefresh()
+        }
     }
 
 }
@@ -346,6 +360,33 @@ Config_RefreshExe(GuiCtrlObj, Info){
     ShowExeList()
 }
 
+ArchiveRefresh(){
+    ConfigArchive.Delete()
+    Loop read,"archive.csv"{
+        result:=[]
+        if(A_Index>1){
+            Loop Parse,A_LoopReadLine,"CSV"{
+                switch A_Index{
+                case 1:
+                    result.Push(A_LoopField)
+                case 2:
+                    result.Push(A_LoopField)
+
+                case 3:
+                    result.Push(A_LoopField)
+                case 4:
+                    result.Push(A_LoopField)
+                }
+
+            }
+            ConfigArchive.Insert(1,,result[1],FormatTime(result[2],"M月dd日"),FormatTime(result[3],"M月dd日"),FormatSeconds(result[4]))
+        }
+    }
+}
+
+Config_Archive(GuiCtrlObj, Info){
+    ShowArchive()
+}
 ;备忘：打算用一个自定义对象数组来管理程序列表，对象包含属性：程序名，程序地址（存图标）；程序是否被选中。数组序号对应ListView里的序号
 
 class Exe {

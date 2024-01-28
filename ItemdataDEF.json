@@ -1,27 +1,27 @@
 ﻿[
     {
-        "start": "1991-01-01 00:00:00",
+        "start": "00010101000000",
         "theme": "f92f60",
         "themeB": "a33e56",
         "themeT": "ffd8d9",
         "time": 0
     },
     {
-        "start": "1991-01-01 00:00:00",
+        "start": "00010101000000",
         "theme": "ffc700",
         "themeB": "a68a26",
         "themeT": "7d4533",
         "time": 0
     },
     {
-        "start": "1991-01-01 00:00:00",
+        "start": "00010101000000",
         "theme": "1c5cd7",
         "themeB": "345492",
         "themeT": "aeddff",
         "time": 0
     },
     {
-        "start": "1991-01-01 00:00:00",
+        "start": "00010101000000",
         "theme": "008463",
         "themeB": "266858",
         "themeT": "c6fbe7",
