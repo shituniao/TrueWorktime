@@ -68,27 +68,6 @@ ConfigArchive.ModifyCol(1, "200 Center")
 ConfigArchive.ModifyCol(2, "65 Center")
 ConfigArchive.ModifyCol(3, "65 Center")
 ConfigArchive.ModifyCol(4, "AutoHdr Center")
-ArchiveRefresh()
-
-Loop read,"log.csv"{
-    result:=[]
-    if(A_Index>1){
-        Loop Parse,A_LoopReadLine,"CSV"{
-            switch A_Index{
-            case 1:
-                result.Push(A_LoopField)
-            case 2:
-                result.Push(A_LoopField)
-            case 3:
-                result.Push(A_LoopField)
-            case 4:
-                result.Push(A_LoopField)
-            }
-
-        }
-        ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日ddd HH:mm"),result[2],result[3],result[4] "%")
-    }
-}
 
 ;--------------用到的函数---------------
 ;开机自动启动
@@ -226,7 +205,7 @@ Config_SwitchTab(GuiCtrlObj, Info){
         {
             Config.Move(,,476,485)
             ConfigTab.Move(,,442,430)
-
+            LogRefresh()
         }
     Case 5:
         {
@@ -358,6 +337,27 @@ Config_RemoveExe(GuiCtrlObj, Info){
 
 Config_RefreshExe(GuiCtrlObj, Info){
     ShowExeList()
+}
+
+LogRefresh(){
+    Loop read,"log.csv"{
+        result:=[]
+        if(A_Index>1){
+            Loop Parse,A_LoopReadLine,"CSV"{
+                switch A_Index{
+                case 1:
+                    result.Push(A_LoopField)
+                case 2:
+                    result.Push(A_LoopField)
+                case 3:
+                    result.Push(A_LoopField)
+                case 4:
+                    result.Push(A_LoopField)
+                }
+            }
+            ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日ddd HH:mm"),result[2],result[3],result[4] "%")
+        }
+    }
 }
 
 ArchiveRefresh(){

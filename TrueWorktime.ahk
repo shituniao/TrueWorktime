@@ -137,6 +137,10 @@ A_TrayMenu.Insert("6&")
 A_TrayMenu.Default:="5&"
 A_TrayMenu.ClickCount:=1
 
+;---------------------------加载软件窗口👇----------------------------------
+#Include Config.ahk 
+#Include Archive.ahk
+
 ;---------------------用到的各种托盘功能函数👇--------------------------------------
 MenuHandler(ItemName, ItemPos, MyMenu) {
     Switch ItemPos{
@@ -194,6 +198,8 @@ ShowArchive(){
     ArchiveChooseItem.Delete()
     ArchiveChooseItem.Add(m)
     ArchiveChooseItem.Choose(Number(logger.CurrentItem))
+    ArchiveTime.Text:=FormatSeconds(Items[logger.CurrentItem]['time'])
+    ArchiveStartTime.Text:=FormatTime(Items[logger.CurrentItem]['start'],"yyyy年M月dd日")
 }
 ;-------------------启动时第一次检查👇-----------------------
 ClockText := ClockGui.Add("Text", "x0 ym r1 w" ClockWidth " c" Theme[logger.Theme "T"] " Center", "准备") 
@@ -233,10 +239,6 @@ if(WorkExe.Length>0){
         ;SetTimer () => ToolTip(), -8000
     } 
 }
-
-;---------------------------加载软件窗口👇----------------------------------
-#Include Config.ahk 
-#Include Archive.ahk
 
 ;✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅启动计时器✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 logger.Start 
