@@ -340,6 +340,7 @@ Config_RefreshExe(GuiCtrlObj, Info){
 }
 
 LogRefresh(){
+    ConfigLogList.Delete()
     Loop read,"log.csv"{
         result:=[]
         if(A_Index>1){

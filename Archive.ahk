@@ -17,8 +17,10 @@ ArchiveChooseItem.OnEvent("Change",Archive_ChooseItem)
 ArchiveTime:=Archive.AddText("x130 yp+4 w400",FormatSeconds(Items[logger.CurrentItem]['time']))
 ArchiveStartTime:=Archive.AddText("x230 yp w400",FormatTime(Items[logger.CurrentItem]['start'],"yyyy年M月dd日"))
 
-ArchiveOK:=Archive.AddButton("xs y+10 w390 +Disabled","✔️归档")
+ArchiveOK:=Archive.AddButton("xs y+10 w190 +Disabled","✅归档")
 ArchiveOK.OnEvent("Click",Archive_OK)
+ArchiveReset:=Archive.AddButton("x+5 yp w190 +Disabled","🔄️归档并重置")
+ArchiveReset.OnEvent("Click",Archive_Reset)
 
 ArchiveComplete:=Archive.AddText("xs y+10 w400",)
 
@@ -34,10 +36,20 @@ Archive_OK(GuiCtrlObj, Info){
     ArchiveRefresh()
 }
 
+Archive_Reset(GuiCtrlObj, Info){
+    FileAppend "`n" ArchiveNameItem.Text "," Items[ArchiveChooseItem.Value]['start'] "," A_Now "," Items[ArchiveChooseItem.Value]['time'] , "archive.csv"
+    ResetItem()
+    ArchiveComplete.Text:="完成！归档时间：" FormatTime(A_Now,"yyyy年M月dd日 HH:mm:ss" "，当前项目已重置。")
+    Archive.Move(,,,205)
+    ArchiveRefresh()
+}
+
 Archive_Rename(GuiCtrlObj, Info){
     if(ArchiveNameItem.Text=""){
         ArchiveOK.Opt("+Disabled")
+        ArchiveReset.Opt("+Disabled")
     }Else{
         ArchiveOK.Opt("-Disabled")
+        ArchiveReset.Opt("-Disabled")
     }
 }
