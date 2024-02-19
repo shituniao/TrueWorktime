@@ -33,31 +33,31 @@ Config.AddText("xs+15 ys+48","切换至计时器1(红):`tCtrl+Shift+F1`n切换�
 ;ConfigTab.Choose(3)   用这个来单独选择标签页3，用来给第一次使用的用户直接设置工作软件，记得连带设置宽高
 ;工作软件
 ConfigTab.UseTab(3)
-Config.AddText("y45 x25 section","从右边的列表中选择工作用的软件，点击“+”号添加到左边的列表中。`n如果没有你需要的软件，可以先启动它，然后点击“刷新”")
-config.AddText("xs ys+45 section","工作软件：")
-WorkList:=Array() ;工作程序列表映射
-ConfigWorkList :=Config.AddListView("ys+20 h280 xs vConfigWorkList w190 -Hdr",["名称"])
-ConfigWorkList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
-ConfigWorkList.OnEvent("ItemSelect",WorkList_ItemSelect)
+Config.AddText("y45 x25 section","从左边的列表中选择工作用的软件，点击“+”号添加到右边的列表中。`n如果没有你要选的软件，可以先启动它，然后点击[↺刷新]")
+config.AddText("xs ys+45 section","当前打开的软件：")
+ExeList:=Array() ;当前程序列表映射
+ConfigExeList :=Config.AddListView("ys+20 h280 xs vConfigExeList w190 -Hdr",["名称"])
+ConfigExeList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
+ConfigExeList.OnEvent("ItemSelect",ExeList_ItemSelect)
+ConfigRefreshExe:=Config.AddButton("xs+120 ys-5 w70 h25","↺刷新")
+ConfigRefreshExe.OnEvent("Click",Config_RefreshExe)
 ConfigAddExe:=Config.AddButton("x+2 yp+100 w25 h30","+")
 ConfigAddExe.setFont("s12")
 ConfigAddExe.OnEvent("Click",Config_AddExe)
 ConfigRemoveExe:=Config.AddButton("xp yp+36 w25 h30","-")
 ConfigRemoveExe.setFont("s12")
 ConfigRemoveExe.OnEvent("Click",Config_RemoveExe)
-config.AddText("xs+220 ys section","当前打开的软件：")
-ExeList:=Array() ;当前程序列表映射
-ConfigExeList :=Config.AddListView("section ys+20 h250 xs vConfigExeList w190 -Hdr",["名称"])
-ConfigExeList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
-ConfigExeList.OnEvent("ItemSelect",ExeList_ItemSelect)
-ConfigRefreshExe:=Config.AddButton("xs ys+251 w190 h30","↺刷新")
-ConfigRefreshExe.OnEvent("Click",Config_RefreshExe)
+config.AddText("xs+220 ys section","工作软件：")
+WorkList:=Array() ;工作程序列表映射
+ConfigWorkList :=Config.AddListView("ys+20 h280 xs vConfigWorkList w190 -Hdr",["名称"])
+ConfigWorkList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
+ConfigWorkList.OnEvent("ItemSelect",WorkList_ItemSelect)
 ;计时记录
 ConfigTab.UseTab(4)
 ConfigLogList :=Config.AddListView("y35 x15 h395 w430 NoSortHdr",["开始时间","工作时长","总时长","工作时长占比"])
 ConfigLogList.ModifyCol(1, "130 Center")
-ConfigLogList.ModifyCol(2, "100 Center")
-ConfigLogList.ModifyCol(3, "100 Center")
+ConfigLogList.ModifyCol(2, "80 Center")
+ConfigLogList.ModifyCol(3, "80 Center")
 ConfigLogList.ModifyCol(4, "AutoHdr Center")
 ;归档记录
 ConfigTab.UseTab(5)
