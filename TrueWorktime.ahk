@@ -442,14 +442,12 @@ LastData(){
 
 ;csv文件写入
 csvWrite(){
-
     start:=IniRead("Config.ini","data","last_start")
     worktime:=IniRead("Config.ini","data","last_worktime")
     alltime:=DateDiff(IniRead("Config.ini","data","last_end"),IniRead("Config.ini","data","last_start"),"seconds")
     ratio:=Round(100*worktime/alltime)
-    worktime:=FormatSeconds(worktime)
-    alltime:=FormatSeconds(alltime)
-
+    worktime:=worktime
+    alltime:=alltime
     FileAppend "`n" start "," worktime "," alltime "," ratio , "log.csv"
     IniWrite A_Now,"Config.ini","data","last_start"
 }

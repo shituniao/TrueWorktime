@@ -54,7 +54,18 @@ ConfigWorkList.ModifyCol(1, 160) ;第一列宽度为240（铺满只显示一列
 ConfigWorkList.OnEvent("ItemSelect",WorkList_ItemSelect)
 ;计时记录
 ConfigTab.UseTab(4)
-ConfigLogList :=Config.AddListView("y35 x15 h395 w430 NoSortHdr",["开始时间","工作时长","总时长","工作时长占比"])
+Try{
+    IniRead("Config.ini","setting","user_time")
+    IniRead("Config.ini","setting","user_worktime")
+}Catch{
+    IniWrite 0,"Config.ini","setting","user_time"
+    IniWrite "20240101000000","Config.ini","setting","user_worktime"
+}
+ConfigUserTime:=Config.AddCheckBox("x25 y40 section Checked" IniRead("Config.ini","setting","user_time"), "规定每日总时长:")
+ConfigUserWorkTime:=Config.AddDateTime("xs+110 ys-4 w200 1 Choose" IniRead("Config.ini","setting","user_worktime"), "HH:mm")
+ConfigUserTime.OnEvent("Click",Config_UserTime)
+ConfigUserWorkTime.OnEvent("Change",Config_UserTime)
+ConfigLogList :=Config.AddListView("ys+25 x15 h365 w430 NoSortHdr",["开始时间","工作时长","总时长","工作时长占比"])
 ConfigLogList.ModifyCol(1, "130 Center")
 ConfigLogList.ModifyCol(2, "80 Center")
 ConfigLogList.ModifyCol(3, "80 Center")
@@ -340,6 +351,12 @@ Config_RefreshExe(GuiCtrlObj, Info){
 }
 
 LogRefresh(){
+    Try{
+        UserWorkTime:=IniRead("Config.ini","setting","user_time")
+    }Catch{
+        UserWorkTime:=0
+        IniWrite 0,"Config.ini","setting","user_time"
+    }
     ConfigLogList.Delete()
     Loop read,"log.csv"{
         result:=[]
@@ -351,14 +368,37 @@ LogRefresh(){
                 case 2:
                     result.Push(A_LoopField)
                 case 3:
-                    result.Push(A_LoopField)
+                    if(UserWorkTime){
+                        result.Push(FormatTime(IniRead("Config.ini","setting","user_worktime"),"HH:mm:ss"))
+                    }Else{
+                        result.Push(FormatSeconds(A_LoopField))
+                    }
                 case 4:
-                    result.Push(A_LoopField)
+                    if(UserWorkTime){
+                        m:=DateDiff(IniRead("Config.ini","setting","user_worktime"),"20240101000000","Seconds")
+                        if(m!=0){
+                            result.Push(Round(100*Number(result[2])/m))
+                        }Else{
+                            result.Push("0")
+                        }
+                    }Else{
+                        result.Push(A_LoopField)
+                    }
                 }
             }
-            ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日ddd HH:mm"),result[2],result[3],result[4] "%")
+            ConfigLogList.Insert(1,,FormatTime(result[1],"M月dd日ddd HH:mm"),FormatSeconds(result[2]),result[3],result[4] "%")
         }
     }
+}
+
+Config_UserTime(GuiCtrlObj, Info){
+    if(ConfigUserTime.Value){
+        IniWrite 1,"Config.ini","setting","user_time"
+        IniWrite ConfigUserWorkTime.Value,"Config.ini","setting","user_worktime"
+    }Else{
+        IniWrite 0,"Config.ini","setting","user_time"
+    }
+    LogRefresh()
 }
 
 ArchiveRefresh(){
