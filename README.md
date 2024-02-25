@@ -1,7 +1,14 @@
 # TrueWorktime
+![Static Badge](https://img.shields.io/badge/Windows-only-gray?logo=windows10&labelColor=0078D4)
+[![GitHub Release](https://img.shields.io/github/v/release/shituniao/TrueWorktime)](https://github.com/shituniao/TrueWorktime/releases)
+<a href="https://www.npmjs.com/package/vue"><img src="https://img.shields.io/npm/l/vue.svg?sanitize=true" alt="License"></a> 
+
+[![GitHub Downloads](https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88-642K-da644d
+)](https://github.com/shituniao/TrueWorktime/releases/download/v1.5/TrueWorkTime.v1.5.zip)
+
 ## 概述
-   工作计时器是一个帮助用户记录工作时长和时间管理的程序。<br>
-   程序每秒检测当前正在使用的软件是否是预先设定的工作软件，且用户是否在30秒内有鼠标操作或键盘输入。<br>
+   工作计时器是一个帮助用户记录工作时长和时间管理的程序。   
+   程序每秒检测当前正在使用的软件是否是预先设定的工作软件，且用户是否在30秒内有鼠标操作或键盘输入。
 
 ---
 
@@ -26,9 +33,12 @@
 ![image-7.png](https://gd-hbimg.huaban.com/e42857ac67680f5a53bd5482ab43b596d46486a84a82-mUfS8L_fw1200webp)  
 - 若两次计时之间间隔较短，会提示用户是否延用计时：  
 ![image-8.png](https://gd-hbimg.huaban.com/c4cbd9f9476270ea09b179b3745083acd902ee281a32-E6qHTu_fw1200webp)  
+
 ---
 ### 本程序基于AutoHotkey编写  
 ### 由shituniao制作
+## LICENSE
+[MIT](https://opensource.org/licenses/MIT)
 
 
 

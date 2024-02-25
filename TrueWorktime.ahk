@@ -1,4 +1,4 @@
-Version :="v1.1.0"
+Version :="v1.5.0"
 FileEncoding "UTF-8"
 
 ;引入外部JSON库，来自https://github.com/G33kDude/cJson.ahk
