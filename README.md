@@ -26,6 +26,7 @@
 ![image-7.png](https://gd-hbimg.huaban.com/e42857ac67680f5a53bd5482ab43b596d46486a84a82-mUfS8L_fw1200webp)  
 - 若两次计时之间间隔较短，会提示用户是否延用计时：  
 ![image-8.png](https://gd-hbimg.huaban.com/c4cbd9f9476270ea09b179b3745083acd902ee281a32-E6qHTu_fw1200webp)  
+---
 ### 本程序基于AutoHotkey编写  
 ### 由shituniao制作
 
