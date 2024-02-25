@@ -2,12 +2,12 @@ Version :="v1.1.0"
 FileEncoding "UTF-8"
 
 ;引入外部JSON库，来自https://github.com/G33kDude/cJson.ahk
-FileInstall "JSON.ahk", "JSON.ahk" ,1 ;把JSON.ahk写入exe文件里
+;FileInstall "JSON.ahk", "JSON.ahk" ,1 ;把JSON.ahk写入exe文件里
 FileInstall "Config.ahk", "Config.ahk" ,1 ;把Config.ahk写入exe文件里
 FileInstall "Archive.ahk", "Archive.ahk" ,1 ;把Archive.ahk写入exe文件里
 FileInstall "ItemdataDEF.json", "ItemdataDEF.json" ,1 ;把保底JSON写入exe文件里
 FileInstall "configDEF.ini", "configDEF.ini" ,1 ;把保底JSON写入exe文件里
-FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
+;FileInstall "ItemIcon.dll", "ItemIcon.dll" ,1 ;把保底JSON写入exe文件里
 ;FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"   创建开机启动
 if(!FileExist("log.csv")){
     FileAppend "start,worktime,alltime,ratio","log.csv"
