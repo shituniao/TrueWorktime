@@ -1,9 +1,7 @@
 # TrueWorktime
 ![Static Badge](https://img.shields.io/badge/Windows-only-gray?logo=windows10&labelColor=0078D4)
 [![GitHub Release](https://img.shields.io/github/v/release/shituniao/TrueWorktime)](https://github.com/shituniao/TrueWorktime/releases)
-<a href="https://www.npmjs.com/package/vue"><img src="https://img.shields.io/npm/l/vue.svg?sanitize=true" alt="License"></a> 
-
-[![GitHub Downloads](https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88-642K-da644d
+[![GitHub Downloads](https://img.shields.io/badge/Download-642K-da644d
 )](https://github.com/shituniao/TrueWorktime/releases/download/v1.5/TrueWorkTime.v1.5.zip)
 
 ## 概述
