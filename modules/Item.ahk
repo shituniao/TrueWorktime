@@ -1,0 +1,82 @@
+
+class item {
+    __New(name:="",start:=A_Now,last:=A_Now,duration:=0){
+        this.name:=name
+        this.start:=start
+        this.last:=last
+        this.duration:=duration
+    }
+}
+
+;检查Item窗口名
+CheckItem(currentWindow){
+    newOne:=True
+    for i in logger.itemList{
+        if(i.name==currentWindow){
+            newOne:=False
+            theOne:=i
+            Break
+        }
+    }
+    if(newOne){
+        theOne:=item(currentWindow,A_Now,A_Now)
+        logger.itemList.InsertAt(1, theOne)
+        OutputDebug("加入新item，名为" theOne.name "时间：" theOne.duration)
+    }Else{
+        theOne.last:=A_Now
+        theOne.duration++
+        OutputDebug("已有窗口，名为" theOne.name "时间：" theOne.duration)
+    }
+    logger.currentItem:=theOne
+}
+
+;更新项目记录文件
+UpdateItems(){
+    Try {
+        FileDelete("data/items.csv")
+    }
+    FileAppend("","data/items.csv")
+    for i in logger.itemList{
+        FileAppend(i.name "," i.start "," i.last "," i.duration "`n","data/items.csv")
+
+    }
+}
+
+;读取Item文件到logger.itemList
+ReadItems(){
+    readItem:=[]
+    Loop Read,"data/items.csv"{
+        readItem:=StrSplit(A_LoopReadLine, ",")
+        logger.itemList.Push(item(readItem[1],readItem[2],readItem[3],readItem[4]))
+    }
+    for i in logger.itemList{
+        OutputDebug(i.name)
+    }
+}
+
+;对item文件是否过期的筛选
+FilterItems(){
+    filterItem:=[]
+    News:=[]
+    Olds:=[]
+    Loop Read,"data/items.csv"{
+        filterItem:=StrSplit(A_LoopReadLine, ",")
+        if(DateDiff(A_Now,filterItem[3],"days")<15){
+            News.Push(filterItem[1] "," filterItem[2] "," filterItem[3] "," filterItem[4])
+        }Else{
+            Olds.Push(filterItem[1] "," filterItem[2] "," filterItem[3] "," filterItem[4])
+            OutputDebug(filterItem[1] "已过期")
+        }
+
+    }
+    Try {
+        FileDelete("data/items.csv")
+    }
+    FileAppend("","data/items.csv")
+    for n in News{
+        FileAppend(n "`n","data/items.csv")
+    }
+    for o in Olds{
+        FileAppend(o "`n","data/itemsOld.csv")
+    }
+}
