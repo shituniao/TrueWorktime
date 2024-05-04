@@ -69,6 +69,7 @@ class Log {
                 FilterItems()
             }
         }Else{
+            IniWrite A_Now,"Cache.ini","data","start"
             OutputDebug("第一次运行")
         }
         ;检测是否设置工作软件
