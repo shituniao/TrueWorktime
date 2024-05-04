@@ -5,8 +5,8 @@ A_TrayMenu.Delete("&Pause Script")
 
 A_TrayMenu.Insert("1&", "功能设置", MenuHandler)
 A_TrayMenu.Insert("2&", "工作软件", MenuHandler)
-A_TrayMenu.Insert("3&", "每日计时", MenuHandler)
-A_TrayMenu.Insert("4&", "项目计时", MenuHandler)
+A_TrayMenu.Insert("3&", "每日记录", MenuHandler)
+A_TrayMenu.Insert("4&", "项目记录", MenuHandler)
 A_TrayMenu.Insert("5&")
 A_TrayMenu.Default:=IniRead("Config.ini","setting","trayicon") "&"
 A_TrayMenu.ClickCount:=1

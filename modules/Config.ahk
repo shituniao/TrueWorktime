@@ -3,7 +3,7 @@ Config.Title :="TrueWorkTime"
 Config.MarginX :=10
 Config.MarginY :=10
 Config.SetFont("s9","Microsoft YaHei UI")
-ConfigTab:=Config.AddTab3("y+5",["功能设置","工作软件","每日计时","项目计时"])
+ConfigTab:=Config.AddTab3("y+5",["功能设置","工作软件","每日记录","项目记录"])
 ConfigTab.Move(,,364,196)
 ConfigTab.OnEvent("Change",Config_SwitchTab)
 
