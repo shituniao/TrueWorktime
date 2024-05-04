@@ -22,6 +22,7 @@ logger := Log() ;计时器对象
 #Include modules/Config.ahk
 #Include modules/Item.ahk
 
+;;核心Log类定义
 class Log {
     __New(){
         ;UI类
@@ -51,20 +52,24 @@ class Log {
         this.mLoop:=ObjBindMethod(this, "MainLoop")
     }
     Start(){
-        ;6小时间隔检测是否延用
-        if(DateDiff(A_Now,IniRead("Cache.ini","data","end"),"hours")<6){ ;21600000
-            if(MsgBox("检测到近期（6小时内）有时间记录，是否延用？","工作计时器","4 64")=="Yes"){
-                logger.workTime:=IniRead("Cache.ini","data","worktime")
-                logger.breakTime:=IniRead("Cache.ini","data","breaktime")
-                logger.leaveTime:=IniRead("Cache.ini","data","leavetime")
-                logger.runTime:=IniRead("Cache.ini","data","runtime")
+        ;初次启动检测与6小时间隔检测是否延用
+        if(InStr(FileRead("data/log.csv"),"`n")){
+            if(DateDiff(A_Now,IniRead("Cache.ini","data","end"),"hours")<6){ ;21600000
+                if(MsgBox("检测到近期（6小时内）有时间记录，是否延用？","工作计时器","4 64")=="Yes"){
+                    logger.workTime:=IniRead("Cache.ini","data","worktime")
+                    logger.breakTime:=IniRead("Cache.ini","data","breaktime")
+                    logger.leaveTime:=IniRead("Cache.ini","data","leavetime")
+                    logger.runTime:=IniRead("Cache.ini","data","runtime")
+                }else{
+                    NewLog()
+                    FilterItems()
+                }
             }else{
                 NewLog()
                 FilterItems()
             }
-        }else{
-            NewLog()
-            FilterItems()
+        }Else{
+            OutputDebug("第一次运行")
         }
         ;检测是否设置工作软件
         if(this.workList.Length==0){
