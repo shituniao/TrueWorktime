@@ -32,13 +32,9 @@ CheckItem(currentWindow){
 
 ;更新项目记录文件
 UpdateItems(){
-    Try {
-        FileDelete("data/items.csv")
-    }
-    FileAppend("","data/items.csv")
+    File_items:=FileOpen("data/items.csv", "w")
     for i in logger.itemList{
-        FileAppend(i.name "," i.start "," i.last "," i.duration "`n","data/items.csv")
-
+        File_items.Write(i.name "," i.start "," i.last "," i.duration "`n")
     }
 }
 
@@ -50,7 +46,7 @@ ReadItems(){
         logger.itemList.Push(item(readItem[1],readItem[2],readItem[3],readItem[4]))
     }
     for i in logger.itemList{
-        OutputDebug(i.name)
+        OutputDebug("----------程序列表" i.name)
     }
 }
 
@@ -69,14 +65,14 @@ FilterItems(){
         }
 
     }
-    Try {
-        FileDelete("data/items.csv")
-    }
-    FileAppend("","data/items.csv")
+    File_items:=FileOpen("data/items.csv", "w")
+    File_itemsOld:=FileOpen("data/itemsOld.csv", "a")
     for n in News{
-        FileAppend(n "`n","data/items.csv")
+        File_items.Write(n "`n")
     }
     for o in Olds{
-        FileAppend(o "`n","data/itemsOld.csv")
+        File_itemsOld.Write(o "`n")
     }
+    File_items.Close()
+    File_itemsOld.Close()
 }

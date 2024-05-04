@@ -3,6 +3,7 @@ FileEncoding "UTF-8"
 
 ;预加载
 TraySetIcon(, , 1) ;冻结托盘图标
+
 ;主题颜色map
 Theme := Map()
 Theme["red"]:="f92f60" ;红f92f60/ffd8d9黄ffc700/7d4533蓝1c5cd7/aeddff绿008463/c6fbe7
@@ -42,7 +43,7 @@ class Log {
         this.itemList:=[] ;Item列表
         this.state:=1 ;计时器状态，1-工作中，2-摸鱼中，3-离开中
         this.currentWindow:="" ;当前窗口名
-        this.currentItem:=item()
+        this.currentItem:=item() ;当前窗口对象
         this.workTime :=0 ;工作时间
         this.breakTime :=0 ;摸鱼时间
         this.leaveTime :=0 ;离开时间
