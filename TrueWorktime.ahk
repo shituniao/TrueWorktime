@@ -76,10 +76,7 @@ class Log {
         ;检测是否设置工作软件
         if(this.workList.Length==0){
             if(MsgBox("尚未设置工作软件，是否进行设置？","工作计时器","4 48")="Yes"){
-                Config.Show("Center")
-                Config.Move(,,476,455)
-                ConfigTab.Move(,,442,400)
-                ConfigTab.Choose(3)
+                ShowConfig(2)
                 ShowWorkList()
                 ShowExeList()
             } 
