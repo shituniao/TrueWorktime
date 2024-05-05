@@ -15,6 +15,7 @@ ConfigTab.OnEvent("Change",Config_SwitchTab)
 
 ;设置
 ConfigTab.UseTab(1)
+CheckAutoRun()
 ConfigAutoRun:=Config.AddCheckBox("x25 y45 section vAutoRun Checked" IniRead("Config.ini","setting","auto_run"), "开机自动启动")
 ConfigAutoRun.OnEvent("Click",Config_AutoRun)
 ConfigShow:=Config.AddCheckBox("xs y+10 section Checked" IniRead("Config.ini","setting","show"), "显示计时器")
@@ -86,6 +87,19 @@ ConfigItemList.ModifyCol(4, "80 Center")
 ConfigItemList.ModifyCol(5, "80 Center")
 
 ;--------------用到的函数---------------
+;检查开机自动启动
+CheckAutoRun(){
+    if(FileExist(A_Startup "/TrueWorkTime.lnk")){
+        if(!IniRead("Config.ini","setting","auto_run")){
+            OutputDebug("设置为开机不启动，但存在快捷方式，所以删除快捷方式")
+            FileDelete(A_Startup "/TrueWorkTime.lnk")
+        }
+    }Else if(IniRead("Config.ini","setting","auto_run")){
+        OutputDebug("设置为开机启动但没有快捷方式，所以创建快捷方式")
+        FileCreateShortcut A_ScriptFullPath,A_Startup "/TrueWorkTime.lnk"
+    }
+}
+
 ;开机自动启动
 Config_AutoRun(GuiCtrlObj, Info){
     if(GuiCtrlObj.Value){
