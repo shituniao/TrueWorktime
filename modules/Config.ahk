@@ -31,7 +31,7 @@ config.AddText("xs y+10 section","颜色主题：")
 ConfigSwitchTheme:=Config.AddDropDownList("vSwitchTheme x+3 yp-4 w242 Choose" CurrentTheme(), ["黑色","白色"])
 ConfigSwitchTheme.OnEvent("Change",Config_SwitchTheme)
 config.AddText("xs y+10 section","点击托盘图标显示：")
-ConfigTrayIcon:=Config.AddDropDownList("x+3 yp-4 w193 Choose" IniRead("Config.ini","setting","trayicon"), ["功能设置","工作软件","每日计时","项目计时"])
+ConfigTrayIcon:=Config.AddDropDownList("x+3 yp-4 w193 Choose" IniRead("Config.ini","setting","trayicon"), ["功能设置","工作软件","每日记录","项目记录"])
 ConfigTrayIcon.OnEvent("Change",Config_TrayIcon)
 
 ;工作软件

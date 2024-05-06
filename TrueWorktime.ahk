@@ -95,7 +95,7 @@ class Log {
         }Else{
             if(isWorking()){
                 this.state:=1
-                this.currentWindow:=WinGetTitle()
+                this.currentWindow:=CutWindowName(WinGetTitle())
             }Else{
                 this.state:=2
             }
@@ -217,4 +217,15 @@ NewLog(){
     ratio:=Round(100*worktime/alltime)
     FileAppend "`n" start "," worktime "," alltime "," ratio , "data/log.csv"
     IniWrite A_Now,"Cache.ini","data","start"
+}
+
+;窗口标题移除字符
+CutWindowName(thename){
+    thename:=StrReplace(thename, A_Space)
+    target:=IniRead("Config.ini","setting","trims")
+    Loop Parse target
+    {
+        thename:=StrReplace(thename,A_LoopField)
+    }
+    Return thename
 }
