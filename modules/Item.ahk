@@ -34,8 +34,9 @@ CheckItem(currentWindow){
 UpdateItems(){
     File_items:=FileOpen("data/items.csv", "w")
     for i in logger.itemList{
-        File_items.Write(i.name "," i.start "," i.last "," i.duration "`n")
+        File_items.Write(StrReplace(i.name,",","_") "," i.start "," i.last "," i.duration "`n")
     }
+    File_items.Close()
 }
 
 ;读取Item文件到logger.itemList
@@ -58,9 +59,9 @@ FilterItems(){
     Loop Read,"data/items.csv"{
         filterItem:=StrSplit(A_LoopReadLine, ",")
         if(DateDiff(A_Now,filterItem[3],"days")<15){
-            News.Push(filterItem[1] "," filterItem[2] "," filterItem[3] "," filterItem[4])
+            News.Push(StrReplace(filterItem[1],",","_") "," filterItem[2] "," filterItem[3] "," filterItem[4])
         }Else{
-            Olds.Push(filterItem[1] "," filterItem[2] "," filterItem[3] "," filterItem[4])
+            Olds.Push(StrReplace(filterItem[1],",","_") "," filterItem[2] "," filterItem[3] "," filterItem[4])
             OutputDebug(filterItem[1] "已过期")
         }
 
